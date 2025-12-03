@@ -36,7 +36,7 @@
             overflow-x: hidden;
         }
 
-        /* 섹션별 스냅 설정 - 내용이 길면 스크롤 가능하게 */
+        /* 섹션별 스냅 설정 */
         section {
             scroll-snap-align: start;
             scroll-snap-stop: always;
@@ -65,7 +65,6 @@
             50% { opacity: .7; }
         }
 
-        /* Progress Bar */
         #progress-bar {
             position: fixed;
             top: 0;
@@ -75,6 +74,9 @@
             z-index: 100;
             transition: width 0.1s;
         }
+        
+        /* Graph Bar Animation */
+        .graph-bar { transition: height 1s ease-out; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
@@ -113,9 +115,10 @@
             Coins: (p) => <Icon {...p} path={<><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /><path d="M7 6h1v4" /><path d="m16.71 13.88.7 .71-2.82 2.82" /></>} />,
             Sparkles: (p) => <Icon {...p} path={<><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></>} />,
             Bot: (p) => <Icon {...p} path={<><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></>} />,
+            GraphUp: (p) => <Icon {...p} path={<><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></>} />,
         };
 
-        // --- Layout Components ---
+        // --- Components ---
 
         const Section = ({ children, className = "", id = "" }) => (
             <section id={id} className={`min-h-screen w-full flex flex-col justify-center py-20 px-4 md:px-8 max-w-7xl mx-auto ${className}`}>
@@ -167,39 +170,33 @@
             );
         };
 
-        const ChecklistItem = ({ text }) => {
-            const [checked, setChecked] = useState(false);
+        // Checklist with Persistence
+        const ChecklistItem = ({ id, text, checkedState, onToggle }) => {
             return (
                 <div 
-                    onClick={() => setChecked(!checked)}
-                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border group ${checked ? 'bg-blue-50 border-blue-200 bg-blue-50/50' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
+                    onClick={() => onToggle(id)}
+                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border group ${checkedState ? 'bg-blue-50 border-blue-200 bg-blue-50/50' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
                 >
-                    <div className={`w-6 h-6 min-w-[1.5rem] rounded-full flex items-center justify-center transition-all ${checked ? 'bg-blue-500 text-white scale-110' : 'bg-slate-200 text-slate-400 group-hover:bg-slate-300'}`}>
+                    <div className={`w-6 h-6 min-w-[1.5rem] rounded-full flex items-center justify-center transition-all ${checkedState ? 'bg-blue-500 text-white scale-110' : 'bg-slate-200 text-slate-400 group-hover:bg-slate-300'}`}>
                         <Icons.CheckCircle size={14} />
                     </div>
-                    <span className={`text-base font-medium transition-colors ${checked ? 'text-blue-700 line-through decoration-blue-300' : 'text-slate-600'}`}>{text}</span>
+                    <span className={`text-base font-medium transition-colors ${checkedState ? 'text-blue-700 line-through decoration-blue-300' : 'text-slate-600'}`}>{text}</span>
                 </div>
             );
         };
 
-        // --- Gemini API & Logic ---
+        // --- Gemini API Function ---
         const getGeminiAdvice = async (loanAmount, rate, years, monthlyPayment, userKey) => {
-            // 데모 모드 (키가 없을 때)
             if (!userKey) {
                 return `[AI 데모 분석]\n\n"사장님, 2%대 고정금리는 현재 시장에서 찾기 힘든 엄청난 혜택입니다! 5년 뒤 금리가 4%대로 올라도 월 상환액은 약 30~40만 원 정도 늘어납니다. 현재 소득(540만 원) 대비 상환액(163만 원)은 DSR 30% 수준으로 매우 건전합니다. \n\n단, 5년 후를 대비해 매달 차액만큼 비상금을 모아두시는 전략을 추천합니다. 지금이 아니면 이 조건은 다시 오지 않습니다. 강력 추천합니다!"`;
             }
-
             const prompt = `역할: 당신은 친절하고 전문적인 부동산 재무 설계사입니다. 상황: 사용자는 2025년 3월생 자녀가 있는 부부입니다. 부천 일루미스테이트(약 6억)를 매수하려 합니다. 부부 합산 월 소득은 약 540만원입니다. 대출 조건: 신생아 특례 대출, 대출금 ${loanAmount}만원, 금리 ${rate}%, 기간 ${years}년. 예상 월 상환액은 ${monthlyPayment.toLocaleString()}원입니다. 요청: 이 대출 조건이 이 가정에 적절한지(소득 대비 상환액 비율 DSR 고려), 주의할 점(특히 5년 후 금리 변동 시나리오), 그리고 응원의 한마디를 포함해 300자 이내로 따뜻하고 전문적인 한국어로 조언해주세요.`;
-
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-                
                 if (!response.ok) throw new Error('API 호출 실패');
                 const data = await response.json();
                 return data.candidates[0].content.parts[0].text;
@@ -208,36 +205,92 @@
             }
         };
 
-        const LoanCalculator = () => {
-            const [loanAmount, setLoanAmount] = useState(47000); 
-            const [rate, setRate] = useState(2.7);
-            const [years, setYears] = useState(40);
+        // --- NEW Component: Asset Growth Simulator ---
+        const AssetGraph = ({ loanAmount }) => {
+            const startAsset = 13000; // 1.3억
+            const housePrice = 60000; // 6억
+            const loanPrincipal = loanAmount; // 대출금
+            
+            // 10년 후 예상 (보수적: 집값 연 2% 상승, 원금 상환)
+            // 40년 만기 원리금균등 시 10년차 잔액 대략 계산
+            // 단순화: 10년동안 원금의 약 15% 상환한다고 가정
+            const loanRepaid = loanPrincipal * 0.15; 
+            const futureLoan = loanPrincipal - loanRepaid;
+            const futureHousePrice = housePrice * Math.pow(1.02, 10); // 연 2% 상승
+            const futureEquity = futureHousePrice - futureLoan;
+
+            // 전세 시나리오: 보증금 1.3억 + 월세 저축(월 50만 가정, 연 3%)
+            const rentSavings = 50 * 12 * 10; // 단순 합
+            const futureRentAsset = startAsset + rentSavings; // 이자 수익 등은 인플레이션 퉁침
+
+            const maxVal = Math.max(futureEquity, futureRentAsset) * 1.2;
+
+            return (
+                <div className="bg-slate-800 text-white p-6 rounded-3xl mt-6 shadow-inner relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><Icons.TrendingUp size={80} /></div>
+                    <h4 className="font-bold text-lg mb-4 flex items-center gap-2"><Icons.GraphUp className="text-green-400"/> 10년 후 자산 가치 시뮬레이션</h4>
+                    <div className="space-y-4 relative z-10">
+                        <div>
+                            <div className="flex justify-between text-sm mb-1 text-slate-300">
+                                <span>🏠 매수 시 (순자산)</span>
+                                <span className="font-bold text-green-400">약 {Math.round(futureEquity/10000)}억 {(Math.round(futureEquity)%10000).toLocaleString()}만</span>
+                            </div>
+                            <div className="h-4 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 graph-bar" style={{width: `${(futureEquity/maxVal)*100}%`}}></div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1">* 집값 연 2% 상승 & 원금 상환 효과</p>
+                        </div>
+                        <div>
+                            <div className="flex justify-between text-sm mb-1 text-slate-300">
+                                <span>📉 전세 유지 시</span>
+                                <span className="font-bold text-slate-400">약 {Math.round(futureRentAsset/10000)}억 {(Math.round(futureRentAsset)%10000).toLocaleString()}만</span>
+                            </div>
+                            <div className="h-4 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-slate-500 graph-bar" style={{width: `${(futureRentAsset/maxVal)*100}%`}}></div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1">* 보증금 동결 가정 (현실적으론 더 불리)</p>
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-700 text-center">
+                        <span className="bg-green-900/50 text-green-300 px-3 py-1 rounded-full text-xs font-bold border border-green-700">
+                            격차: 약 {Math.round((futureEquity - futureRentAsset)/10000)}억 원 예상!
+                        </span>
+                    </div>
+                </div>
+            );
+        };
+
+        const LoanCalculator = ({ savedLoan, savedRate, savedYears, onSave }) => {
+            const [loanAmount, setLoanAmount] = useState(savedLoan || 47000); 
+            const [rate, setRate] = useState(savedRate || 2.7);
+            const [years, setYears] = useState(savedYears || 40);
             const [advice, setAdvice] = useState(null);
             const [isLoading, setIsLoading] = useState(false);
             const [userKey, setUserKey] = useState("");
             const [showKeyInput, setShowKeyInput] = useState(false);
             const [showScenario, setShowScenario] = useState(false);
 
-            // 기본 월 상환액
-            const monthlyPayment = useMemo(() => {
-                const r = rate / 100 / 12;
-                const n = years * 12;
-                const p = loanAmount * 10000;
-                return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+            // Auto Save when values change
+            useEffect(() => {
+                onSave({ loanAmount, rate, years });
             }, [loanAmount, rate, years]);
 
-            // 5년 후 금리 변동 시나리오 계산
+            const monthlyPayment = useMemo(() => {
+                const principal = loanAmount * 10000;
+                const monthlyRate = rate / 100 / 12;
+                const totalMonths = years * 12;
+                if (rate === 0) return principal / totalMonths;
+                const payment = (principal * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+                return Math.round(payment);
+            }, [loanAmount, rate, years]);
+
             const scenarioPayment35 = useMemo(() => {
-                const r = 3.5 / 100 / 12;
-                const n = years * 12; // 잔여 기간은 편의상 동일하게 계산 (보수적 접근)
-                const p = loanAmount * 10000;
+                const r = 3.5 / 100 / 12; const n = years * 12; const p = loanAmount * 10000;
                 return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
             }, [loanAmount, years]);
 
             const scenarioPayment45 = useMemo(() => {
-                const r = 4.5 / 100 / 12;
-                const n = years * 12; 
-                const p = loanAmount * 10000;
+                const r = 4.5 / 100 / 12; const n = years * 12; const p = loanAmount * 10000;
                 return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
             }, [loanAmount, years]);
 
@@ -263,13 +316,7 @@
 
                         {showKeyInput && (
                             <div className="mb-4 animate-fade-in-down">
-                                <input 
-                                    type="password" 
-                                    placeholder="Gemini API Key (없으면 데모 실행)" 
-                                    className="w-full p-2 border rounded-lg text-sm bg-slate-50"
-                                    value={userKey}
-                                    onChange={(e) => setUserKey(e.target.value)}
-                                />
+                                <input type="password" placeholder="Gemini API Key (없으면 데모 실행)" className="w-full p-2 border rounded-lg text-sm bg-slate-50" value={userKey} onChange={(e) => setUserKey(e.target.value)}/>
                             </div>
                         )}
 
@@ -279,38 +326,22 @@
                                     <span>대출금액 (디딤돌)</span>
                                     <span className="font-bold text-slate-900 text-lg">{(loanAmount / 10000).toFixed(1)}억 원</span>
                                 </div>
-                                <input 
-                                    type="range" min="30000" max="50000" step="1000" 
-                                    value={loanAmount} onChange={(e) => setLoanAmount(Number(e.target.value))}
-                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500"
-                                />
+                                <input type="range" min="30000" max="50000" step="1000" value={loanAmount} onChange={(e) => setLoanAmount(Number(e.target.value))} className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500" />
                             </div>
-                            
                             <div>
                                 <div className="flex justify-between mb-2 text-sm text-slate-600">
                                     <span>대출 만기</span>
                                     <span className="font-bold text-slate-900 text-lg">{years}년</span>
                                 </div>
-                                <input 
-                                    type="range" min="10" max="50" step="10" 
-                                    value={years} onChange={(e) => setYears(Number(e.target.value))}
-                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                                <div className="mt-1 text-xs text-blue-600 font-medium text-right">
-                                    * 만 39세 이하 or 신혼부부 가능 (최대 40년)
-                                </div>
+                                <input type="range" min="10" max="50" step="10" value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                <div className="mt-1 text-xs text-blue-600 font-medium text-right">* 만 39세 이하 or 신혼부부 가능 (최대 40년)</div>
                             </div>
-
                             <div>
                                 <div className="flex justify-between mb-2 text-sm text-slate-600">
                                     <span>금리 (5년 고정)</span>
                                     <span className="font-bold text-slate-900 text-lg">{rate}%</span>
                                 </div>
-                                <input 
-                                    type="range" min="1.5" max="4.5" step="0.1" 
-                                    value={rate} onChange={(e) => setRate(Number(e.target.value))}
-                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
+                                <input type="range" min="1.5" max="4.5" step="0.1" value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
                                 <div className="mt-2 text-xs text-red-600 font-bold bg-red-50 p-2 rounded-lg text-center border border-red-100 flex items-center justify-center gap-1 animate-pulse-slow">
                                     <Icons.AlertTriangle size={14} /> 주의: 5년간만 이 금리! 이후 변동 가능
                                 </div>
@@ -318,37 +349,20 @@
                             
                             <div className="bg-slate-900 p-6 rounded-3xl text-center shadow-inner text-white relative group cursor-pointer transition-transform active:scale-95" onClick={handleGetAdvice}>
                                 <p className="text-slate-400 text-sm mb-1">현재 예상 월 상환액</p>
-                                <div className="text-4xl font-bold text-green-400 tracking-tight mb-2">
-                                    {(monthlyPayment / 10000).toLocaleString()}
-                                    <span className="text-xl text-white ml-1">만 원</span>
-                                </div>
+                                <div className="text-4xl font-bold text-green-400 tracking-tight mb-2">{(monthlyPayment / 10000).toLocaleString()}<span className="text-xl text-white ml-1">만 원</span></div>
                                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                                    <div className="flex items-center gap-2 text-yellow-300 font-bold">
-                                        <Icons.Sparkles className="animate-spin-slow" />
-                                        <span>AI 전문가 진단 받기</span>
-                                    </div>
+                                    <div className="flex items-center gap-2 text-yellow-300 font-bold"><Icons.Sparkles className="animate-spin-slow" /><span>AI 전문가 진단 받기</span></div>
                                 </div>
                             </div>
 
-                            {/* 5년 후 시나리오 토글 */}
                             <div className="border-t border-slate-100 pt-4">
-                                <button 
-                                    onClick={() => setShowScenario(!showScenario)}
-                                    className="w-full text-sm text-slate-500 flex items-center justify-center gap-1 hover:text-slate-800 transition-colors"
-                                >
+                                <button onClick={() => setShowScenario(!showScenario)} className="w-full text-sm text-slate-500 flex items-center justify-center gap-1 hover:text-slate-800 transition-colors">
                                     {showScenario ? "시나리오 접기" : "5년 후 금리가 오르면?"} <Icons.ChevronDown className={`w-4 h-4 transition-transform ${showScenario ? 'rotate-180' : ''}`} />
                                 </button>
-                                
                                 {showScenario && (
                                     <div className="mt-4 space-y-3 bg-slate-50 p-4 rounded-xl text-sm animate-fade-in-down">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-600">금리 3.5% 상승 시</span>
-                                            <span className="font-bold text-slate-800">+{(scenarioPayment35 - monthlyPayment).toLocaleString()}원</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-600">금리 4.5% 상승 시</span>
-                                            <span className="font-bold text-red-600">+{(scenarioPayment45 - monthlyPayment).toLocaleString()}원</span>
-                                        </div>
+                                        <div className="flex justify-between items-center"><span className="text-slate-600">금리 3.5% 상승 시</span><span className="font-bold text-slate-800">+{(scenarioPayment35 - monthlyPayment).toLocaleString()}원</span></div>
+                                        <div className="flex justify-between items-center"><span className="text-slate-600">금리 4.5% 상승 시</span><span className="font-bold text-red-600">+{(scenarioPayment45 - monthlyPayment).toLocaleString()}원</span></div>
                                         <p className="text-xs text-slate-400 mt-2 text-center">지금부터 월 30만원씩 비상금 저축 추천!</p>
                                     </div>
                                 )}
@@ -356,21 +370,10 @@
                         </div>
                     </div>
 
-                    {/* AI Advice Result */}
                     {(isLoading || advice) && (
                         <div className="mt-6 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-sm animate-fade-in-down relative z-20">
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
-                                <Icons.Sparkles size={12} /> Gemini 분석 결과
-                            </div>
-                            {isLoading ? (
-                                <div className="flex justify-center items-center py-4 text-indigo-400">
-                                    <Icons.Bot className="animate-bounce mr-2" /> 데이터를 분석하고 있습니다...
-                                </div>
-                            ) : (
-                                <div className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
-                                    {advice}
-                                </div>
-                            )}
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-md"><Icons.Sparkles size={12} /> Gemini 분석 결과</div>
+                            {isLoading ? <div className="flex justify-center items-center py-4 text-indigo-400"><Icons.Bot className="animate-bounce mr-2" /> 데이터를 분석하고 있습니다...</div> : <div className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{advice}</div>}
                         </div>
                     )}
                 </div>
@@ -404,10 +407,33 @@
         };
 
         function App() {
+            // State for Persistence
+            const [calculatorState, setCalculatorState] = useState(() => {
+                const saved = localStorage.getItem('loanCalc');
+                return saved ? JSON.parse(saved) : { loanAmount: 47000, rate: 2.7, years: 40 };
+            });
+
+            const [checkedItems, setCheckedItems] = useState(() => {
+                const saved = localStorage.getItem('checklist');
+                const defaultItems = [
+                    "단지 내 경사가 심하지 않은가? (유모차)",
+                    "초등학교 가는 길에 차도가 없는가?",
+                    "4단지에서 스타필드까지 도보 시간은?",
+                    "집 내부 일조량 (남향 위주) 확인",
+                    "지하주차장 연결 상태 확인",
+                    "부동산 사장님께 '급매' 여부 재확인"
+                ];
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Merge saved states with default items
+                    return defaultItems.map((item, idx) => ({ id: idx, text: item, checked: parsed[idx] || false }));
+                }
+                return defaultItems.map((item, idx) => ({ id: idx, text: item, checked: false }));
+            });
+
             useEffect(() => { 
                 AOS.init({ duration: 800, once: false, offset: 50 });
                 
-                // Progress Bar Logic
                 const handleScroll = () => {
                     const winScroll = document.documentElement.scrollTop;
                     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -417,6 +443,22 @@
                 window.addEventListener('scroll', handleScroll);
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
+
+            // Save Checklist
+            useEffect(() => {
+                const states = {};
+                checkedItems.forEach(item => states[item.id] = item.checked);
+                localStorage.setItem('checklist', JSON.stringify(states));
+            }, [checkedItems]);
+
+            const handleCheckToggle = (id) => {
+                setCheckedItems(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
+            };
+
+            const handleCalculatorSave = (state) => {
+                localStorage.setItem('loanCalc', JSON.stringify(state));
+                setCalculatorState(state);
+            };
 
             return (
                 <div className="pb-32">
@@ -628,7 +670,7 @@
                         </div>
                     </Section>
 
-                    {/* 5. Money Plan */}
+                    {/* 5. Money Plan & Simulation */}
                     <Section id="money" className="bg-slate-50">
                         <SectionTitle subtitle="현실적인 돈 이야기" icon={Icons.Wallet}>자금 계획 및 실행</SectionTitle>
                         <div className="flex flex-col lg:flex-row gap-8 items-stretch">
@@ -645,6 +687,9 @@
                                             <div className="text-xl font-black text-blue-400">78%</div>
                                         </div>
                                     </div>
+                                    
+                                    {/* NEW: Asset Simulator */}
+                                    <AssetGraph loanAmount={calculatorState.loanAmount} />
                                 </Card>
                                 <div className="bg-red-50 p-8 rounded-[2.5rem] border border-red-100">
                                     <h4 className="font-bold text-red-700 flex items-center gap-2 mb-6 text-lg"><Icons.AlertTriangle size={24}/> 히든 코스트 (현금)</h4>
@@ -658,7 +703,12 @@
                                 </div>
                             </div>
                             <div className="w-full lg:w-1/2" data-aos="fade-left">
-                                <LoanCalculator />
+                                <LoanCalculator 
+                                    savedLoan={calculatorState.loanAmount} 
+                                    savedRate={calculatorState.rate} 
+                                    savedYears={calculatorState.years}
+                                    onSave={handleCalculatorSave} 
+                                />
                             </div>
                         </div>
                     </Section>
@@ -735,15 +785,14 @@
                                     임장 체크리스트
                                 </h3>
                                 <div className="space-y-3">
-                                    {[
-                                        "단지 내 경사가 심하지 않은가? (유모차)",
-                                        "초등학교 가는 길에 차도가 없는가?",
-                                        "4단지에서 스타필드까지 도보 시간은?",
-                                        "집 내부 일조량 (남향 위주) 확인",
-                                        "지하주차장 연결 상태 확인",
-                                        "부동산 사장님께 '급매' 여부 재확인"
-                                    ].map((text, i) => (
-                                        <ChecklistItem key={i} text={text} />
+                                    {checkedItems.map((item) => (
+                                        <ChecklistItem 
+                                            key={item.id} 
+                                            id={item.id}
+                                            text={item.text} 
+                                            checkedState={item.checked}
+                                            onToggle={handleCheckToggle}
+                                        />
                                     ))}
                                 </div>
                                 <div className="mt-8 p-4 bg-slate-50 rounded-2xl text-center text-sm text-slate-500 border border-slate-100">👆 항목을 클릭하여 체크할 수 있습니다.</div>
