@@ -27,35 +27,45 @@
             font-family: Pretendard, sans-serif; 
             margin: 0; 
             padding: 0; 
+            overflow: hidden; /* 전체 스크롤 제어는 main-container에 위임 */
+            background-color: #f8fafc;
+        }
+
+        /* 메인 컨테이너 스크롤 설정 (PC/Mobile 분기) */
+        #main-container {
+            width: 100%;
+            height: 100vh;
             overflow-x: hidden;
         }
 
-        /* PC: 원페이지 스크롤 적용 */
+        /* PC (1024px 이상): 원페이지 스크롤 적용 */
         @media (min-width: 1024px) {
-            html { 
-                scroll-behavior: smooth; 
-                scroll-snap-type: y mandatory; 
-                height: 100vh;
+            #main-container {
                 overflow-y: scroll;
+                scroll-snap-type: y mandatory;
+                scroll-behavior: smooth;
             }
             section {
                 scroll-snap-align: start;
                 scroll-snap-stop: always;
-                height: 100vh; /* PC는 화면 꽉 차게 */
+                min-height: 100vh; /* 화면 꽉 차게 */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
         }
 
-        /* Mobile: 일반 스크롤 적용 */
+        /* Mobile & Tablet (~1023px): 일반 스크롤 */
         @media (max-width: 1023px) {
-            html {
-                height: auto;
+            #main-container {
                 overflow-y: auto;
+                scroll-snap-type: none; /* 스냅 해제 */
             }
             section {
-                height: auto; /* 모바일은 콘텐츠 길이에 맞게 */
-                min-height: 100vh;
+                min-height: auto;
                 padding-top: 80px;
                 padding-bottom: 80px;
+                display: block;
             }
         }
 
@@ -97,7 +107,11 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
     <div id="progress-bar" style="width: 0%"></div>
-    <div id="root"></div>
+    
+    <!-- Main Scroll Container -->
+    <div id="main-container">
+        <div id="root"></div>
+    </div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
@@ -139,7 +153,7 @@
         // --- Components ---
 
         const Section = ({ children, className = "", id = "" }) => (
-            <section id={id} className={`flex flex-col justify-center py-12 md:py-24 px-4 md:px-8 max-w-7xl mx-auto ${className}`}>
+            <section id={id} className={`w-full px-4 md:px-8 max-w-7xl mx-auto ${className}`}>
                 {children}
             </section>
         );
@@ -163,7 +177,7 @@
                 className={`
                     rounded-[2rem] p-6 md:p-8 transition-all duration-300 relative
                     ${highlight 
-                        ? 'bg-white shadow-2xl ring-4 ring-blue-50 border-2 border-blue-500 z-10 transform md:scale-105' 
+                        ? 'bg-white shadow-2xl ring-4 ring-blue-50 border-2 border-blue-500 z-10 transform' 
                         : 'bg-white shadow-xl border border-slate-100 hover:shadow-2xl hover:-translate-y-1'}
                     ${className}
                 `}
@@ -432,8 +446,12 @@
                 { label: "실행", id: "action", icon: Icons.CheckSquare },
             ];
             const scrollTo = (id) => {
+                const container = document.getElementById('main-container');
                 const el = document.getElementById(id);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (el && container) {
+                    const top = el.offsetTop;
+                    container.scrollTo({ top: top, behavior: 'smooth' });
+                }
             };
             return (
                 <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4 animate-float">
@@ -504,16 +522,22 @@
             });
 
             useEffect(() => { 
-                AOS.init({ duration: 800, once: false, offset: 50 });
+                AOS.init({ 
+                    duration: 800, 
+                    once: false, 
+                    offset: 50,
+                    // 모바일에서는 애니메이션을 비활성화하거나 조정할 수 있음
+                });
                 
+                const container = document.getElementById('main-container');
                 const handleScroll = () => {
-                    const winScroll = document.documentElement.scrollTop;
-                    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                    const winScroll = container.scrollTop;
+                    const height = container.scrollHeight - container.clientHeight;
                     const scrolled = (winScroll / height) * 100;
                     document.getElementById("progress-bar").style.width = scrolled + "%";
                 };
-                window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
+                container.addEventListener('scroll', handleScroll);
+                return () => container.removeEventListener('scroll', handleScroll);
             }, []);
 
             // Save Checklist
@@ -535,11 +559,11 @@
             return (
                 <div className="pb-32">
                     {/* 1. Hero */}
-                    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-900 text-white overflow-hidden snap-start snap-always">
-                        <div className="absolute inset-0 opacity-60 bg-[url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
+                    <Section id="hero" className="snap-always bg-slate-900 text-white relative overflow-hidden !py-0 !max-w-none">
+                         <div className="absolute inset-0 opacity-60 bg-[url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
                         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900"></div>
                         
-                        <div className="relative z-10 text-center px-4 max-w-5xl" data-aos="fade-up">
+                        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto h-full flex flex-col justify-center" data-aos="fade-up">
                             <div className="mb-8 flex justify-center space-x-3">
                                 <Badge color="blue" className="!text-white !bg-blue-600 !border-blue-500">2025.12.03</Badge>
                                 <Badge color="yellow" className="!text-yellow-900 !bg-yellow-400 !border-yellow-300">D-Day Project</Badge>
@@ -571,7 +595,7 @@
                                 <Icons.ChevronDown className="w-10 h-10" />
                             </div>
                         </div>
-                    </div>
+                    </Section>
 
                     {/* 2. Summary & Map */}
                     <Section id="summary" className="bg-white">
@@ -635,10 +659,10 @@
                     {/* 3. Comparison */}
                     <Section id="compare" className="bg-slate-50">
                         <SectionTitle subtitle="왜 다른 곳은 안 되는가?" icon={Icons.ShieldAlert}>심층 비교 분석</SectionTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {/* Recommendation Card */}
                             <div 
-                                className="md:col-span-1 bg-white rounded-[2rem] shadow-2xl ring-4 ring-blue-100 border-2 border-blue-500 relative overflow-hidden transform md:scale-105 z-10"
+                                className="col-span-1 bg-white rounded-[2rem] shadow-2xl ring-4 ring-blue-100 border-2 border-blue-500 relative overflow-hidden z-10"
                                 data-aos="flip-left"
                             >
                                 <div className="bg-blue-600 p-6 text-center">
