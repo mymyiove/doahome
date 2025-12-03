@@ -54,6 +54,12 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
+
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
@@ -61,6 +67,11 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
+
+        // --- API Configuration ---
+        // 주의: 실제 배포 시에는 백엔드를 통해 호출하는 것이 안전합니다.
+        // 테스트를 위해 여기에 키를 입력하거나, 버튼 클릭 시 입력받도록 구현했습니다.
+        const apiKey = ""; 
 
         // --- Icons ---
         const Icon = ({ path, className, size = 24, fill="none", stroke="currentColor" }) => (
@@ -89,6 +100,8 @@
             Building: (p) => <Icon {...p} path={<rect x="4" y="2" width="16" height="20" rx="2" ry="2" />} />,
             BadgeCheck: (p) => <Icon {...p} path={<><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78"/><path d="m9 12 2 2 4-4"/></>} />,
             Coins: (p) => <Icon {...p} path={<><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /><path d="M7 6h1v4" /><path d="m16.71 13.88.7 .71-2.82 2.82" /></>} />,
+            Sparkles: (p) => <Icon {...p} path={<><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></>} />,
+            Bot: (p) => <Icon {...p} path={<><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></>} />,
         };
 
         // --- Layout Components ---
@@ -159,10 +172,42 @@
             );
         };
 
+        // --- Gemini API Function ---
+        const getGeminiAdvice = async (loanAmount, rate, years, monthlyPayment, userKey) => {
+            const key = userKey || apiKey;
+            if (!key) {
+                alert("API 키가 필요합니다. 설정 아이콘을 눌러 키를 입력하거나 코드에 추가해주세요.");
+                return null;
+            }
+
+            const prompt = `역할: 당신은 친절하고 전문적인 부동산 재무 설계사입니다. 상황: 사용자는 2025년 3월생 자녀가 있는 부부입니다. 부천 일루미스테이트(약 6억)를 매수하려 합니다. 부부 합산 월 소득은 약 540만원입니다. 대출 조건: 신생아 특례 대출, 대출금 ${loanAmount}만원, 금리 ${rate}%, 기간 ${years}년. 예상 월 상환액은 ${monthlyPayment.toLocaleString()}원입니다. 요청: 이 대출 조건이 이 가정에 적절한지(소득 대비 상환액 비율 DSR 고려), 주의할 점(특히 5년 후 금리 변동), 그리고 응원의 한마디를 포함해 300자 이내로 따뜻하고 전문적인 한국어로 조언해주세요.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+                
+                if (!response.ok) throw new Error('API 호출 실패');
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                return "죄송합니다. AI 전문가 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
+            }
+        };
+
         const LoanCalculator = () => {
             const [loanAmount, setLoanAmount] = useState(47000); 
             const [rate, setRate] = useState(2.7);
             const [years, setYears] = useState(40);
+            const [advice, setAdvice] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [userKey, setUserKey] = useState("");
+            const [showKeyInput, setShowKeyInput] = useState(false);
 
             const monthlyPayment = useMemo(() => {
                 const principal = loanAmount * 10000;
@@ -173,16 +218,45 @@
                 return Math.round(payment);
             }, [loanAmount, rate, years]);
 
+            const handleGetAdvice = async () => {
+                if (showKeyInput && !userKey && !apiKey) {
+                    alert("API 키를 입력해주세요!");
+                    return;
+                }
+                setIsLoading(true);
+                const result = await getGeminiAdvice(loanAmount, rate, years, monthlyPayment, userKey);
+                setAdvice(result);
+                setIsLoading(false);
+            };
+
             return (
-                <div className="bg-white rounded-[2rem] p-8 h-full shadow-xl border border-slate-200 relative overflow-hidden">
+                <div className="bg-white rounded-[2rem] p-8 h-full shadow-xl border border-slate-200 relative overflow-hidden flex flex-col justify-between">
                     <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-6 text-green-600">
-                            <Icons.Calculator size={28} />
-                            <h3 className="text-2xl font-bold text-slate-800">실시간 대출 계산기</h3>
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-2 text-green-600">
+                                <Icons.Calculator size={28} />
+                                <h3 className="text-2xl font-bold text-slate-800">실시간 대출 계산기</h3>
+                            </div>
+                            <button onClick={() => setShowKeyInput(!showKeyInput)} className="text-slate-400 hover:text-slate-600 p-1">
+                                <Icons.Bot size={20} />
+                            </button>
                         </div>
-                        <div className="space-y-8">
+
+                        {showKeyInput && (
+                            <div className="mb-4">
+                                <input 
+                                    type="password" 
+                                    placeholder="Gemini API Key 입력" 
+                                    className="w-full p-2 border rounded-lg text-sm"
+                                    value={userKey}
+                                    onChange={(e) => setUserKey(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <div className="space-y-6">
                             <div>
-                                <div className="flex justify-between mb-3 text-sm text-slate-600">
+                                <div className="flex justify-between mb-2 text-sm text-slate-600">
                                     <span>대출금액 (디딤돌)</span>
                                     <span className="font-bold text-slate-900 text-lg">{(loanAmount / 10000).toFixed(1)}억 원</span>
                                 </div>
@@ -194,7 +268,7 @@
                             </div>
                             
                             <div>
-                                <div className="flex justify-between mb-3 text-sm text-slate-600">
+                                <div className="flex justify-between mb-2 text-sm text-slate-600">
                                     <span>대출 만기</span>
                                     <span className="font-bold text-slate-900 text-lg">{years}년</span>
                                 </div>
@@ -209,7 +283,7 @@
                             </div>
 
                             <div>
-                                <div className="flex justify-between mb-3 text-sm text-slate-600">
+                                <div className="flex justify-between mb-2 text-sm text-slate-600">
                                     <span>금리 (5년 고정)</span>
                                     <span className="font-bold text-slate-900 text-lg">{rate}%</span>
                                 </div>
@@ -222,15 +296,40 @@
                                     <Icons.AlertTriangle size={14} /> 5년간 특례 금리 적용, 이후 변동 가능
                                 </div>
                             </div>
-                            <div className="bg-slate-900 p-8 rounded-3xl text-center shadow-inner text-white">
-                                <p className="text-slate-400 text-sm mb-2">예상 월 상환액 (원금+이자)</p>
-                                <div className="text-5xl font-bold text-green-400 tracking-tight">
+                            
+                            <div className="bg-slate-900 p-6 rounded-3xl text-center shadow-inner text-white relative group cursor-pointer" onClick={handleGetAdvice}>
+                                <p className="text-slate-400 text-sm mb-1">예상 월 상환액 (원금+이자)</p>
+                                <div className="text-4xl font-bold text-green-400 tracking-tight mb-2">
                                     {(monthlyPayment / 10000).toLocaleString()}
-                                    <span className="text-2xl text-white ml-1">만 원</span>
+                                    <span className="text-xl text-white ml-1">만 원</span>
+                                </div>
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                                    <div className="flex items-center gap-2 text-yellow-300 font-bold">
+                                        <Icons.Sparkles className="animate-spin-slow" />
+                                        <span>AI 전문가 분석 요청</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* AI Advice Result */}
+                    {(isLoading || advice) && (
+                        <div className="mt-6 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-sm animate-fade-in-down relative">
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                <Icons.Sparkles size={12} /> Gemini 분석
+                            </div>
+                            {isLoading ? (
+                                <div className="flex justify-center items-center py-4 text-indigo-400">
+                                    <Icons.Bot className="animate-bounce mr-2" /> 분석 중입니다...
+                                </div>
+                            ) : (
+                                <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                    {advice}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -387,6 +486,22 @@
                     {/* 4. Location & Life */}
                     <Section id="location" className="bg-white">
                         <SectionTitle subtitle="왜 일루미스테이트 인가?" icon={Icons.MapPin}>상세 입지 분석</SectionTitle>
+                        
+                        {/* Map Card - New Addition */}
+                        <div className="mb-12 rounded-[2rem] overflow-hidden shadow-xl border border-slate-200 h-[400px] relative z-10 bg-slate-50 flex items-center justify-center" data-aos="zoom-in">
+                            <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src="https://maps.google.com/maps?q=경기도+부천시+범박동+일루미스테이트&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                                frameBorder="0" 
+                                scrolling="no" 
+                                marginHeight="0" 
+                                marginWidth="0"
+                                title="Illumi State Location"
+                                className="w-full h-full"
+                            ></iframe>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                             <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 border-none" data-aos="fade-right">
                                 <div className="flex items-center gap-3 mb-8">
@@ -439,6 +554,7 @@
                                     <img src={pic.img} alt={pic.label} className="w-full h-full object-cover transition duration-700 group-hover:scale-110" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
                                     <span className="absolute bottom-4 left-4 text-white font-bold text-lg">{pic.label}</span>
+                                    <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl"></div>
                                 </div>
                             ))}
                         </div>
