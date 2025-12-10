@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 우리 가족 보금자리 프로젝트</title>
+    
+    <!-- React & DOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { 
+            font-family: Pretendard, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f8fafc;
+            overflow: hidden; /* 전체 스크롤 막음 -> #scroll-container로 제어 */
+        }
+
+        /* Scroll Snap Container */
+        #scroll-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .snap-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            /* 기본 패딩 제거 (Hero 섹션 풀스크린 위해) */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Hero 섹션 전용 스타일 */
+        #hero.snap-section {
+            padding: 0 !important;
+        }
+
+        /* 나머지 섹션은 내용 중앙 정렬 및 패딩 */
+        .content-section {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 1024px) {
+            .snap-section {
+                min-height: auto; /* 모바일에서는 높이 강제 해제 */
+                display: block;
+            }
+            #hero.snap-section {
+                height: 100vh; /* 히어로는 모바일에서도 꽉 차게 */
+            }
+            #scroll-container {
+                scroll-snap-type: none; /* 모바일은 자연스러운 스크롤 */
+            }
+            .content-section {
+                padding: 60px 20px;
+            }
+        }
+
+        /* Hide Scrollbar */
+        #scroll-container::-webkit-scrollbar { display: none; }
+        #scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Animation Classes */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            will-change: opacity, visibility;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+        
+        .delay-100 { transition-delay: 0.1s; }
+        .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            z-index: 100;
+            transition: width 0.1s;
+        }
+
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; background-color: #eff6ff; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; hover:bg-slate-50; }
+        
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+    <div id="progress-bar" style="width: 0%"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Icons (Inline SVG) ---
+        const Icon = ({ path, className, size = 24, fill="none", stroke="currentColor" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>
+        );
+
+        const Icons = {
+            Home: (p) => <Icon {...p} path={<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>} />,
+            Heart: (p) => <Icon {...p} path={<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />} />,
+            Baby: (p) => <Icon {...p} path={<><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.8 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.8A9 9 0 0 1 12 3a9 9 0 0 1 7 3.3Z"/></>} />,
+            Shield: (p) => <Icon {...p} path={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>} />,
+            TrendingUp: (p) => <Icon {...p} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>} />,
+            Wallet: (p) => <Icon {...p} path={<><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></>} />,
+            CheckCircle: (p) => <Icon {...p} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />,
+            AlertTriangle: (p) => <Icon {...p} path={<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>} />,
+            ArrowDown: (p) => <Icon {...p} path={<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></>} />,
+            XCircle: (p) => <Icon {...p} path={<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>} />,
+            ThumbsUp: (p) => <Icon {...p} path={<><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></>} />,
+            Scale: (p) => <Icon {...p} path={<><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></>} />,
+            MapPin: (p) => <Icon {...p} path={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></>} />,
+            Train: (p) => <Icon {...p} path={<><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M4 11h16"/><path d="M12 4v16"/><path d="m8 8 8 8"/><path d="m16 8-8 8"/></>} />,
+            School: (p) => <Icon {...p} path={<><path d="m4 6 8-4 8 4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 5v17"/><path d="M6 5v17"/></>} />,
+            BadgeCheck: (p) => <Icon {...p} path={<><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78"/><path d="m9 12 2 2 4-4"/></>} />,
+            Calendar: (p) => <Icon {...p} path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>} />,
+        };
+
+        // --- Animations ---
+        // 기존 AOS 제거하고 자체 Intersection Observer Hook 사용
+        function useOnScreen(ref) {
+            const [isIntersecting, setIntersecting] = useState(false);
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => { if(entry.isIntersecting) setIntersecting(true); },
+                    { threshold: 0.2 } // 20% 보이면 애니메이션 시작
+                );
+                if (ref.current) observer.observe(ref.current);
+                return () => observer.disconnect();
+            }, [ref]);
+            return isIntersecting;
+        }
+
+        const FadeInSection = ({ children, delay = "" }) => {
+            const ref = useRef(null);
+            const isVisible = useOnScreen(ref);
+            return (
+                <div ref={ref} className={`fade-in-section ${isVisible ? 'is-visible' : ''} ${delay}`}>
+                    {children}
+                </div>
+            );
+        };
+
+        // --- Common Components ---
+        const Section = ({ id, children, className = "" }) => (
+            <section id={id} className={`snap-section ${className}`}>
+                {children}
+            </section>
+        );
+
+        const SectionHeader = ({ icon: Icon, title, subtitle }) => (
+            <FadeInSection>
+                <div className="text-center mb-10 md:mb-16">
+                    {Icon && <div className="inline-flex p-3 bg-blue-100 rounded-2xl text-blue-600 mb-4 shadow-sm"><Icon size={28}/></div>}
+                    <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">{title}</h2>
+                    <p className="text-lg md:text-xl text-slate-500 font-medium">{subtitle}</p>
+                    <div className="w-20 h-1.5 bg-gradient-to-r from-blue-400 to-indigo-600 mx-auto rounded-full mt-6"></div>
+                </div>
+            </FadeInSection>
+        );
+
+        const Card = ({ children, className = "", highlight = false }) => (
+            <div className={`
+                rounded-[2rem] p-6 md:p-8 transition-all duration-300 relative bg-white
+                ${highlight 
+                    ? 'shadow-2xl ring-4 ring-blue-500 border-2 border-blue-500 z-10 transform md:scale-105' 
+                    : 'shadow-xl border border-slate-100 hover:shadow-2xl hover:-translate-y-1'}
+                ${className}
+            `}>
+                {children}
+            </div>
+        );
+
+        const Badge = ({ children, color = "blue", className="" }) => {
+            const colors = {
+                blue: "bg-blue-100 text-blue-700 border-blue-200",
+                green: "bg-green-100 text-green-700 border-green-200",
+                yellow: "bg-yellow-100 text-yellow-800 border-yellow-200",
+                dark: "bg-slate-800 text-slate-200 border-slate-700",
+                red: "bg-red-100 text-red-700 border-red-200"
+            };
+            return (
+                <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-bold border ${colors[color] || colors.blue} shadow-sm inline-block ${className}`}>
+                    {children}
+                </span>
+            );
+        };
+
+        // --- Sections ---
+
+        // 1. Hero (Full Screen Fixed)
+        const Hero = () => (
+            <Section id="hero" className="bg-gradient-to-b from-slate-900 to-slate-800 text-white relative !p-0">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/50"></div>
+                
+                <FadeInSection>
+                    <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-200 text-sm font-bold mb-6">
+                            <Icons.Baby size={16} /> 9개월 아기 가족을 위한 결단
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight drop-shadow-2xl">
+                            이제는 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">정착</span>할 시간,<br/>
+                            우리 가족의 첫 집
+                        </h1>
+                        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
+                            불안한 전세살이, 2년마다 반복되는 이사 걱정은 이제 그만.<br/>
+                            <b>5.6억</b>으로 시작하는 가장 완벽한 <b>안전지대</b>를 소개합니다.
+                        </p>
+                        <button onClick={()=>document.getElementById('story').scrollIntoView({behavior:'smooth'})} className="animate-bounce bg-white text-slate-900 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-blue-50 transition-colors flex items-center gap-2 mx-auto">
+                            왜 지금 사야 할까? <Icons.ArrowDown size={20}/>
+                        </button>
+                    </div>
+                </FadeInSection>
+            </Section>
+        );
+
+        // 2. Emotional Story
+        const Story = () => (
+            <Section id="story">
+                <div className="content-section">
+                    <SectionHeader icon={Icons.Heart} title="왜 '매수'여야만 할까요?" subtitle="전세가 위험한 이유, 그리고 내 집이 주는 평화" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FadeInSection delay="delay-100">
+                            <div className="bg-red-50 p-8 rounded-[2.5rem] border border-red-100 h-full">
+                                <h3 className="text-2xl font-bold text-red-800 mb-6 flex items-center gap-2"><Icons.AlertTriangle className="text-red-500"/> 전세의 불안함</h3>
+                                <ul className="space-y-6">
+                                    <li className="flex gap-4">
+                                        <div className="bg-white p-2 rounded-lg text-red-500 shadow-sm h-fit shrink-0"><Icons.XCircle size={20}/></div>
+                                        <div><span className="font-bold block text-slate-800 mb-1">2년 뒤의 막막함</span>전세금 올려달라거나 나가라고 하면, 어린 아기 데리고 또 이사 다녀야 합니다.</div>
+                                    </li>
+                                    <li className="flex gap-4">
+                                        <div className="bg-white p-2 rounded-lg text-red-500 shadow-sm h-fit shrink-0"><Icons.XCircle size={20}/></div>
+                                        <div><span className="font-bold block text-slate-800 mb-1">자산이 멈춥니다</span>전세금 3~4억은 2년 뒤에도 그대로입니다. 물가 상승분을 생각하면 사실상 돈을 잃는 것입니다.</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </FadeInSection>
+                        <FadeInSection delay="delay-200">
+                            <div className="bg-blue-50 p-8 rounded-[2.5rem] border border-blue-100 relative overflow-hidden h-full">
+                                <div className="absolute top-0 right-0 p-8 opacity-5"><Icons.Home size={150}/></div>
+                                <h3 className="text-2xl font-bold text-blue-800 mb-6 flex items-center gap-2"><Icons.Shield className="text-blue-500"/> 내 집의 안정감</h3>
+                                <ul className="space-y-6 relative z-10">
+                                    <li className="flex gap-4">
+                                        <div className="bg-white p-2 rounded-lg text-blue-500 shadow-sm h-fit shrink-0"><Icons.CheckCircle size={20}/></div>
+                                        <div><span className="font-bold block text-slate-800 mb-1">초등학교 갈 때까지 쭉</span>아기가 7살이 될 때까지 이사 걱정 없이 한 곳에서 안정적으로 키울 수 있습니다.</div>
+                                    </li>
+                                    <li className="flex gap-4">
+                                        <div className="bg-white p-2 rounded-lg text-blue-500 shadow-sm h-fit shrink-0"><Icons.TrendingUp size={20}/></div>
+                                        <div><span className="font-bold block text-slate-800 mb-1">강제 저축 효과</span>매달 내는 이자와 원금은 사라지는 돈이 아니라, 우리 가족의 미래 자산으로 쌓입니다.</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </FadeInSection>
+                    </div>
+                </div>
+            </Section>
+        );
+
+        // 3. Location & Environment
+        const LocationEnv = () => (
+            <Section id="location">
+                <div className="content-section">
+                    <SectionHeader icon={Icons.Baby} title="9개월 아기를 위한 선택" subtitle="육아 & 출퇴근 환경 완벽 분석" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch mb-8">
+                        {/* Commute Info */}
+                        <FadeInSection delay="delay-100">
+                            <Card className="border-none bg-gradient-to-br from-indigo-50 to-blue-50 h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="bg-white p-3 rounded-2xl shadow-sm text-blue-600"><Icons.Train size={32}/></div>
+                                    <h3 className="text-2xl font-bold text-slate-800">현실 출퇴근 (1호선 급행)</h3>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="bg-white/80 p-5 rounded-3xl shadow-sm backdrop-blur-sm">
+                                        <div className="flex justify-between mb-2 font-bold"><span className="flex items-center gap-2"><Badge color="dark">남편</Badge> 종각/시청</span><span className="text-indigo-600">55분 ~ 1시간</span></div>
+                                        <div className="h-3 bg-slate-200 rounded-full flex overflow-hidden"><div className="w-[20%] bg-slate-400"></div><div className="w-[70%] bg-indigo-500"></div><div className="w-[10%] bg-slate-400"></div></div>
+                                        <p className="text-xs text-slate-500 mt-2 text-right">🚌 버스(15분) → 🚆 1호선 용산급행(35분) → 🚶 도보</p>
+                                    </div>
+                                    <div className="bg-white/80 p-5 rounded-3xl shadow-sm backdrop-blur-sm">
+                                        <div className="flex justify-between mb-2 font-bold"><span className="flex items-center gap-2"><Badge color="red">아내</Badge> 신도림</span><span className="text-pink-600">35분 ~ 40분</span></div>
+                                        <div className="h-3 bg-slate-200 rounded-full flex overflow-hidden"><div className="w-[30%] bg-slate-400"></div><div className="w-[60%] bg-pink-500"></div><div className="w-[10%] bg-slate-400"></div></div>
+                                        <p className="text-xs text-slate-500 mt-2 text-right">✨ 환상의 직주근접 (육아 체력 보존)</p>
+                                    </div>
+                                </div>
+                            </Card>
+                        </FadeInSection>
+
+                        {/* Environment Info */}
+                        <FadeInSection delay="delay-200">
+                            <Card className="border-none bg-gradient-to-br from-emerald-50 to-teal-50 h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="bg-white p-3 rounded-2xl shadow-sm text-green-600"><Icons.School size={32}/></div>
+                                    <h3 className="text-2xl font-bold text-slate-800">단지 내 보육 & 환경</h3>
+                                </div>
+                                <ul className="space-y-4">
+                                    {[
+                                        "국공립 어린이집 3곳 (단지 내)",
+                                        "범박초등학교 바로 앞 (초품아, 412동)",
+                                        "스타필드 별마당 키즈 도서관 (도보 10분)",
+                                        "지상 차 없는 안전한 공원형 단지"
+                                    ].map((txt, i) => (
+                                        <li key={i} className="flex gap-4 items-start bg-white/60 p-4 rounded-2xl border border-white/50">
+                                            <div className="text-emerald-600 shrink-0"><Icons.BadgeCheck size={24} /></div>
+                                            <div><h4 className="font-bold text-slate-900">{txt}</h4></div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </Card>
+                        </FadeInSection>
+                    </div>
+
+                    {/* Map */}
+                    <FadeInSection delay="delay-300">
+                        <div className="rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white min-h-[400px] relative">
+                            <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src="https://maps.google.com/maps?q=경기도+부천시+범박동+일루미스테이트&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                                frameBorder="0" 
+                                scrolling="no" 
+                                className="absolute inset-0 w-full h-full"
+                            ></iframe>
+                            <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-white shadow-xl flex items-center gap-4">
+                                <div className="bg-blue-500 p-3 rounded-full text-white shadow-lg shadow-blue-200"><Icons.MapPin size={24} /></div>
+                                <div>
+                                    <div className="font-bold text-lg text-slate-800">일루미스테이트 4단지</div>
+                                    <div className="text-sm text-slate-500">스타필드 & 범박초 바로 앞 (슬세권)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </FadeInSection>
+                </div>
+            </Section>
+        );
+
+        // 4. Comparative Analysis
+        const ComparativeAnalysis = () => {
+            const [activeTab, setActiveTab] = useState('illumi');
+
+            const data = {
+                illumi: {
+                    title: "부천 일루미스테이트",
+                    price: "5.6억 (급매)",
+                    year: "2023년식 (완전 신축)",
+                    commute: "1시간 (버스+급행)",
+                    pros: "초품아, 스타필드, 신축 커뮤니티, 주차 100% 지하",
+                    cons: "지하철역 버스 이동 필요",
+                    verdict: "BEST CHOICE (가성비+실거주)"
+                },
+                seoul: {
+                    title: "서울 구로/오류동 구축",
+                    price: "5.5억 ~ 6억",
+                    year: "1998~2005년식 (20년차)",
+                    commute: "40분 (1호선 역세권)",
+                    pros: "서울 행정구역, 출퇴근 시간 단축",
+                    cons: "녹물/주차난 심각, 언덕 많음, 인테리어 비용 추가 발생",
+                    verdict: "삶의 질 포기해야 함"
+                },
+                gm: {
+                    title: "광명 소하동 구축",
+                    price: "6억 이상",
+                    year: "2009년식 (16년차)",
+                    commute: "50분 (버스+KTX광명)",
+                    pros: "부모님 댁 매우 가까움, 광명 인프라",
+                    cons: "예산 5.6억으로 매수 불가능, 매물 부족",
+                    verdict: "예산 초과"
+                }
+            };
+
+            const activeData = data[activeTab];
+
+            return (
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 h-full flex flex-col">
+                    <div className="flex justify-center mb-8 space-x-2 md:space-x-4 border-b border-slate-200 pb-1">
+                        <button onClick={() => setActiveTab('illumi')} className={`pb-3 px-4 transition-all text-sm md:text-base ${activeTab === 'illumi' ? 'tab-active' : 'tab-inactive'}`}>우리의 선택 (일루미)</button>
+                        <button onClick={() => setActiveTab('seoul')} className={`pb-3 px-4 transition-all text-sm md:text-base ${activeTab === 'seoul' ? 'tab-active' : 'tab-inactive'}`}>서울 구축 (대안 1)</button>
+                        <button onClick={() => setActiveTab('gm')} className={`pb-3 px-4 transition-all text-sm md:text-base ${activeTab === 'gm' ? 'tab-active' : 'tab-inactive'}`}>광명 구축 (대안 2)</button>
+                    </div>
+                    
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 items-center animate-fade-in-up">
+                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 h-full flex flex-col justify-center">
+                            <h3 className="text-2xl font-bold text-slate-800 mb-2">{activeData.title}</h3>
+                            <div className="text-xl font-bold text-blue-600 mb-6">{activeData.price}</div>
+                            
+                            <div className="space-y-4 text-sm md:text-base">
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-slate-500">연식</span>
+                                    <span className="font-bold">{activeData.year}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-slate-500">출퇴근</span>
+                                    <span className="font-bold">{activeData.commute}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
+                                    <span className="text-slate-500">판정</span>
+                                    <span className={`font-bold ${activeTab === 'illumi' ? 'text-green-600' : 'text-red-500'}`}>{activeData.verdict}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="bg-green-50 p-5 rounded-2xl border border-green-100">
+                                <h4 className="font-bold text-green-800 mb-1 flex items-center gap-2"><Icons.CheckCircle size={18}/> 장점</h4>
+                                <p className="text-sm text-green-700">{activeData.pros}</p>
+                            </div>
+                            <div className="bg-red-50 p-5 rounded-2xl border border-red-100">
+                                <h4 className="font-bold text-red-800 mb-1 flex items-center gap-2"><Icons.AlertTriangle size={18}/> 단점</h4>
+                                <p className="text-sm text-red-700">{activeData.cons}</p>
+                            </div>
+                            {activeTab === 'illumi' && (
+                                <div className="bg-blue-600 text-white p-4 rounded-xl text-center font-bold shadow-lg">
+                                    "1억 더 주고 20년의 시간을 사는 셈입니다."
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ComparisonSection = () => (
+            <Section id="compare">
+                <div className="content-section">
+                    <SectionHeader icon={Icons.Scale} title="왜 꼭 이 집이어야 할까?" subtitle="서울, 광명 다 비교해봐도 정답은 하나입니다." />
+                    <FadeInSection>
+                        <ComparativeAnalysis />
+                    </FadeInSection>
+                </div>
+            </Section>
+        );
+
+        // 5. Analysis (Risk vs Benefit)
+        const BalanceAnalysis = () => {
+            const [activeTab, setActiveTab] = useState('defense');
+            const content = {
+                risk: [
+                    { title: "교통 불편", desc: "지하철 없고 서울 출퇴근 1시간 소요됨." },
+                    { title: "매도 경쟁", desc: "3,700세대 대단지로 나중에 팔 때 경쟁 치열." },
+                    { title: "현금 부족", desc: "가진 현금을 다 털어 넣어 여유가 없음." }
+                ],
+                benefit: [
+                    { title: "육아 환경 종결", desc: "4층 정원뷰 + 초품아 + 지상 차 없는 공원" },
+                    { title: "미래 호재", desc: "신구로선(목동 연결) + 광명시흥 신도시 개발" },
+                    { title: "가격 메리트", desc: "건축 원가 수준의 바닥 가격 (안전마진)" }
+                ],
+                defense: [
+                    { title: "교통 반박", desc: "이미 가격에 불편함 반영됨. 뚫리면 대박." },
+                    { title: "경쟁 반박", desc: "우린 '로얄동 로얄층'임. 하락장에도 1순위 매도." },
+                    { title: "현금 반박", desc: "주식/보험대출 2,200만 원 보존. 월세보다 싼 이자." }
+                ]
+            };
+
+            return (
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 mt-12">
+                    <h3 className="text-xl font-bold text-center mb-6">냉정한 가치 검증</h3>
+                    <div className="flex justify-center mb-6 space-x-4 border-b border-slate-200 pb-1">
+                        <button onClick={() => setActiveTab('risk')} className={`pb-3 px-4 text-sm ${activeTab === 'risk' ? 'tab-active text-red-500 border-red-500' : 'tab-inactive'}`}>Risk (걱정)</button>
+                        <button onClick={() => setActiveTab('benefit')} className={`pb-3 px-4 text-sm ${activeTab === 'benefit' ? 'tab-active text-blue-500 border-blue-500' : 'tab-inactive'}`}>Benefit (이득)</button>
+                        <button onClick={() => setActiveTab('defense')} className={`pb-3 px-4 text-sm ${activeTab === 'defense' ? 'tab-active text-green-600 border-green-600' : 'tab-inactive'}`}>Solution (해결)</button>
+                    </div>
+                    <div className="space-y-3 min-h-[200px]">
+                        {content[activeTab].map((item, idx) => (
+                            <div key={idx} className={`p-4 rounded-xl border ${activeTab === 'risk' ? 'bg-red-50 border-red-100' : activeTab === 'benefit' ? 'bg-blue-50 border-blue-100' : 'bg-green-50 border-green-100'}`}>
+                                <h4 className={`font-bold text-sm mb-1 ${activeTab === 'risk' ? 'text-red-800' : activeTab === 'benefit' ? 'text-blue-800' : 'text-green-800'}`}>{item.title}</h4>
+                                <p className="text-slate-600 text-sm">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const AnalysisSection = () => (
+            <Section id="analysis">
+                <div className="content-section">
+                    <SectionHeader icon={Icons.Shield} title="돌다리도 두드려보고" subtitle="리스크까지 철저하게 검증했습니다." />
+                    <FadeInSection>
+                        <BalanceAnalysis />
+                    </FadeInSection>
+                </div>
+            </Section>
+        );
+
+        // 6. Financials
+        const MortgageCalculator = () => {
+            const [price, setPrice] = useState(56000); 
+            const [rate, setRate] = useState(2.2);
+            const loanAmount = price * 0.7; // LTV 70%
+            const monthlyPayment = Math.floor((loanAmount * 10000 * (rate/100/12) * Math.pow(1 + rate/100/12, 360)) / (Math.pow(1 + rate/100/12, 360) - 1));
+
+            return (
+                <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col h-full">
+                    <div className="bg-blue-600 p-6 text-white text-center">
+                        <h3 className="text-xl font-bold flex justify-center items-center gap-2"><Icons.Wallet /> 월 납입금 계산</h3>
+                    </div>
+                    <div className="p-8 flex-1 flex flex-col justify-center text-center">
+                        <p className="text-slate-500 mb-2">대출 3.92억 (금리 2.2%) 기준</p>
+                        <div className="text-4xl font-black text-slate-800 mb-2">{monthlyPayment.toLocaleString()}<span className="text-xl font-normal">원</span></div>
+                        <div className="text-xs text-green-600 font-bold bg-green-50 py-2 rounded-lg mt-2">소득 550만 원 대비 29% (매우 안정적)</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const FundingPlan = () => {
+            return (
+                <div className="bg-slate-800 text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden h-full flex flex-col justify-center">
+                    <div className="absolute top-0 right-0 p-6 opacity-10"><Icons.Wallet size={100} /></div>
+                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2 relative z-10">
+                        <Icons.CheckCircle className="text-green-400"/> 자금 조달 (5.7억)
+                    </h3>
+                    <div className="space-y-3 relative z-10 text-sm">
+                        <div className="flex justify-between p-3 bg-slate-700 rounded-xl"><span>신생아 특례 대출</span><span className="font-bold text-blue-300">3.92억</span></div>
+                        <div className="flex justify-between p-3 bg-slate-700 rounded-xl"><span>전세 보증금</span><span className="font-bold text-green-300">1.3억</span></div>
+                        <div className="flex justify-between p-3 bg-slate-700 rounded-xl"><span>부부 현금</span><span className="font-bold text-yellow-300">0.5억</span></div>
+                        <div className="flex justify-between p-3 bg-slate-700 rounded-xl border border-red-500/50">
+                            <span>계약금 부족분 (600만)</span>
+                            <span className="font-bold text-red-300">보험약관대출 ✅</span>
+                        </div>
+                    </div>
+                    <p className="mt-4 text-xs text-slate-400 text-center">* 주식 1,200만 원은 비상금으로 보존합니다.</p>
+                </div>
+            );
+        };
+
+        const MoneySection = () => (
+            <Section id="money">
+                <div className="content-section">
+                    <SectionHeader icon={Icons.Wallet} title="돈 걱정, 없습니다" subtitle="보험약관대출 활용으로 완벽한 자금 설계 완료" />
+                    <FadeInSection>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                            <div className="h-full"><MortgageCalculator /></div>
+                            <div className="h-full"><FundingPlan /></div>
+                        </div>
+                    </FadeInSection>
+                </div>
+            </Section>
+        );
+
+        // 7. Conclusion & Timeline
+        const Timeline = () => {
+            const steps = [
+                { title: "오늘", desc: "구로 두산 전세 내놓기 (집주인 압박)" },
+                { title: "이번 주말", desc: "일루미 계약 (가계약금 500만 + 특약)" },
+                { title: "1월", desc: "신생아 특례 신청 (MCG 방공제 면제)" },
+                { title: "2월 말", desc: "잔금 & 입주 (보험대출로 잔금 마무리)" }
+            ];
+            return (
+                <div className="space-y-6">
+                    {steps.map((step, i) => (
+                        <div key={i} className="flex gap-4">
+                            <div className="w-16 font-bold text-blue-600 text-right shrink-0">{step.title}</div>
+                            <div className="w-px bg-slate-200 relative">
+                                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                            </div>
+                            <div className="pb-6">
+                                <div className="font-bold text-slate-800">{step.desc}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const ConclusionSection = () => (
+            <Section id="conclusion">
+                <div className="content-section text-center max-w-3xl mx-auto">
+                    <FadeInSection>
+                        <div className="mb-8 animate-bounce inline-block p-4 bg-yellow-100 rounded-full text-yellow-600 shadow-sm">
+                            <Icons.ThumbsUp size={40} />
+                        </div>
+                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">
+                            모든 검증은 끝났습니다.<br/>
+                            <span className="text-blue-600">이제, 잡아야 합니다.</span>
+                        </h2>
+                        
+                        <div className="bg-white text-left p-8 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-4 mb-12">
+                            <p className="flex gap-3"><span className="text-blue-600 font-bold">1.</span> <span>2년 뒤 전세 난민이 되는 대신, <b>내 집에서 안정적</b>으로 아기를 키웁니다.</span></p>
+                            <p className="flex gap-3"><span className="text-blue-600 font-bold">2.</span> <span>서울 구축의 불편함 대신, <b>경기 신축의 쾌적함</b>을 선택했습니다. (비교 우위 확실)</span></p>
+                            <p className="flex gap-3"><span className="text-blue-600 font-bold">3.</span> <span>와이프 비상금과 <b>보험약관대출</b>로 자금 문제도 완벽히 해결했습니다.</span></p>
+                        </div>
+
+                        <button onClick={()=>alert("사랑해! 우리 잘 살아보자!")} className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-5 px-12 rounded-full shadow-xl shadow-blue-200 transition-transform active:scale-95 w-full md:w-auto">
+                            이번 주말, 계약하러 가자! 👉
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 text-left">
+                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                                <h4 className="font-bold mb-4 flex items-center gap-2 text-indigo-600"><Icons.CheckCircle size={20}/> 실행 계획 (Action Plan)</h4>
+                                <Timeline />
+                            </div>
+                        </div>
+                    </FadeInSection>
+                </div>
+            </Section>
+        );
+
+        // --- App ---
+        function App() {
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    const container = document.getElementById('scroll-container'); 
+                    if (!container) return;
+                    const height = container.scrollHeight - container.clientHeight;
+                    const scrolled = (container.scrollTop / height) * 100;
+                    const bar = document.getElementById("progress-bar");
+                    if(bar) bar.style.width = scrolled + "%";
+                };
+                
+                const container = document.getElementById('scroll-container');
+                if(container) container.addEventListener('scroll', handleScroll);
+                return () => container && container.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollToId = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+
+            return (
+                <div id="scroll-container">
+                    <Hero />
+                    <Story />
+                    <LocationEnv />
+                    <ComparisonSection />
+                    <AnalysisSection />
+                    <MoneySection />
+                    <ConclusionSection />
+                    
+                    {/* Floating Nav */}
+                    <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4 animate-float">
+                        <div className="bg-white/90 backdrop-blur-lg text-slate-600 rounded-full shadow-2xl p-2 flex items-center gap-2 border border-slate-200">
+                            {[
+                                { id: "hero", icon: Icons.Home, label: "홈" },
+                                { id: "story", icon: Icons.Heart, label: "이유" },
+                                { id: "location", icon: Icons.MapPin, label: "입지" },
+                                { id: "compare", icon: Icons.TrendingUp, label: "비교" },
+                                { id: "money", icon: Icons.Wallet, label: "자금" },
+                                { id: "conclusion", icon: Icons.CheckCircle, label: "결론" },
+                            ].map((item) => (
+                                <button key={item.id} onClick={() => scrollToId(item.id)} className="flex flex-col items-center justify-center w-14 h-14 rounded-full hover:bg-blue-50 hover:text-blue-600 transition active:scale-95">
+                                    <item.icon size={20} className="mb-1" />
+                                    <span className="text-[10px] font-medium opacity-80">{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
