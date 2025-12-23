@@ -32,18 +32,16 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
     <style>
-        /* One Page Scroll Snap - The Real Deal */
+        /* Base Styles */
         html {
             scroll-behavior: smooth;
-            scroll-snap-type: y mandatory; /* Force snap to sections */
-            height: 100vh;
-            overflow-y: scroll;
         }
         body {
             font-family: 'Pretendard', sans-serif;
             background-color: #0f172a; /* Slate-900 */
             color: #f8fafc;
             margin: 0;
+            overflow-x: hidden;
         }
         
         ::-webkit-scrollbar { width: 8px; }
@@ -56,11 +54,22 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 2rem 1.5rem; /* Reduced padding for better fit on laptop screens */
+            padding: 4rem 1.5rem;
             position: relative;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            scroll-snap-align: start; /* Snap point */
-            scroll-snap-stop: always; /* Ensure it stops at each section */
+        }
+
+        /* --- One Page Scroll Snap (Desktop Only) --- */
+        @media (min-width: 1024px) {
+            html {
+                scroll-snap-type: y mandatory;
+                height: 100vh;
+                overflow-y: scroll;
+            }
+            section {
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+            }
         }
 
         /* --- Animations & Effects --- */
@@ -85,15 +94,14 @@
             left: 0;
             bottom: -2px;
             width: 0;
-            height: 3px;
-            background-color: #3b82f6; /* Blue-500 */
-            animation: swipe 3s ease-out infinite;
+            height: 8px; /* Thicker for visibility */
+            background-color: rgba(59, 130, 246, 0.6); /* Blue-500 with opacity */
+            z-index: -1;
+            animation: swipe 2s ease-out forwards;
         }
         @keyframes swipe {
-            0% { width: 0; opacity: 0; }
-            20% { width: 0; opacity: 1; }
-            80% { width: 100%; opacity: 1; }
-            100% { width: 100%; opacity: 0; }
+            0% { width: 0; }
+            100% { width: 100%; }
         }
 
         /* 3. Hover Lift & Glow */
@@ -132,24 +140,29 @@
             z-index: 0;
         }
         
-        /* Fixed: Light Popup for Dark Map */
+        /* Fixed: Light Popup for Dark Map - Enhanced Visibility */
         .leaflet-popup-content-wrapper {
-            background: rgba(255, 255, 255, 0.95) !important;
+            background: rgba(255, 255, 255, 0.98) !important;
             color: #0f172a !important;
             border-radius: 12px !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
             font-family: 'Pretendard', sans-serif !important;
+            padding: 0 !important;
         }
         .leaflet-popup-tip {
-            background: rgba(255, 255, 255, 0.95) !important;
+            background: rgba(255, 255, 255, 0.98) !important;
         }
         .leaflet-popup-content {
             font-size: 14px !important;
-            line-height: 1.6 !important;
+            line-height: 1.5 !important;
+            margin: 12px 16px !important;
+            min-width: 180px;
         }
         .leaflet-popup-content strong {
-            color: #2563eb !important;
+            color: #1e40af !important; /* Darker blue for contrast */
             font-size: 16px !important;
+            display: block;
+            margin-bottom: 4px;
         }
         .leaflet-popup-content span {
             color: #475569 !important;
@@ -254,7 +267,7 @@
                 <div className={`fixed bottom-8 right-8 z-50 transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <button 
                         onClick={scrollToTop} 
-                        className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-colors animate-pulse-glow"
+                        className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-colors animate-bounce"
                         aria-label="맨 위로"
                     >
                         <Icons.ArrowUp size={24} />
@@ -279,6 +292,7 @@
                             const rect = element.getBoundingClientRect();
                             if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
                                 setActiveSection(id);
+                                break;
                             }
                         }
                     }
@@ -453,7 +467,7 @@
                             <span className="text-blue-500 font-bold tracking-widest text-xs uppercase mb-4 block">Strategic Conclusion</span>
                             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
                                 범박은 "지금 살기 좋은 집"이고,<br/>
-                                해모로는 <span className="text-gradient">"다음 수를 남기는 집"</span>입니다.
+                                해모로는 <span className="text-bloom text-blue-400">"다음 수를 남기는 집"</span>입니다.
                             </h2>
                             <p className="text-xl text-slate-400">이 차이가 인생 전체의 자산 격차를 만듭니다.</p>
                         </div>
@@ -479,21 +493,21 @@
                                     <li className="flex gap-3">
                                         <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Clock size={16}/></div>
                                         <div>
-                                            <strong className="block mb-1">시간 자산의 확보</strong>
+                                            <strong className="block mb-1 underline-swipe">시간 자산의 확보</strong>
                                             <span className="text-slate-400">범박의 버스 출근 vs 해모로의 1호선 도보. 5년간 1,000시간의 차이는 '아이와 보내는 시간'과 '부부의 여유'로 직결됩니다.</span>
                                         </div>
                                     </li>
                                     <li className="flex gap-3">
                                         <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.ArrowRight size={16}/></div>
                                         <div>
-                                            <strong className="block mb-1">이동 가능한 자산</strong>
+                                            <strong className="block mb-1 underline-swipe">이동 가능한 자산</strong>
                                             <span className="text-slate-400">서울로 가려면 '살기 좋은 집'보다 '팔기 쉬운 집'이 필요합니다. 1호선 라인은 거래량이 마르지 않습니다.</span>
                                         </div>
                                     </li>
                                     <li className="flex gap-3">
                                         <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Maximize size={16}/></div>
                                         <div>
-                                            <strong className="block mb-1">상승장의 갭 메우기</strong>
+                                            <strong className="block mb-1 underline-swipe">상승장의 갭 메우기</strong>
                                             <span className="text-slate-400">상승장은 같이 오르지 않습니다. 서울 → 1호선/GTX → 외곽 순으로 오릅니다. 해모로는 그 흐름의 앞단에 있습니다.</span>
                                         </div>
                                     </li>
@@ -593,7 +607,7 @@
         // --- Section 5: Risk (Honest Review) ---
         const RiskSection = () => {
             return (
-                <section id="risk" className="bg-slate-950">
+                <section id="risk" className="bg-slate-900">
                     <div className="max-w-6xl mx-auto w-full px-6 animate-enter">
                         <div className="mb-12 text-center">
                             <h2 className="text-3xl font-bold text-white mb-4">해모로의 리스크 (Honest Review)</h2>
@@ -838,40 +852,41 @@
             );
         };
 
-        // --- Section 9: Roadmap (Enhanced) ---
+        // --- Section 9: Roadmap (Enhanced with Specific Milestones) ---
         const RoadmapSection = () => {
             return (
                 <section id="roadmap" className="bg-slate-900">
                     <div className="max-w-4xl mx-auto w-full animate-enter">
                         <div className="mb-16 text-center">
                             <h2 className="text-4xl font-bold text-white mb-4">Golden Roadmap</h2>
-                            <p className="text-slate-400">전세 만기(내년 9월) 전 선제적 이동부터 서울 진입까지.</p>
+                            <p className="text-slate-400">전세 만기 전 선제적 이동부터, 2030년 서울 진입까지.</p>
                         </div>
                         <div className="relative border-l-2 border-slate-700 ml-6 space-y-12">
                             <div className="relative pl-8">
                                 <div className="absolute -left-[9px] w-4 h-4 rounded-full bg-slate-500 ring-4 ring-slate-950"></div>
-                                <h3 className="text-lg font-bold text-slate-400 mb-1">현재 (Now) ~ 2026 초</h3>
-                                <p className="text-slate-500 text-sm">전세 만기(9월) 전 매수 타이밍 포착. 급매물 선점 및 신생아 특례 신청.</p>
+                                <h3 className="text-lg font-bold text-slate-400 mb-1">현재 ~ 2026.02 (준비기)</h3>
+                                <p className="text-slate-500 text-sm">전세 만기(내년 9월) 전 선제적 이동 결정. <br/>신생아 특례 자격 확보 및 급매물 모니터링.</p>
                             </div>
                             <div className="relative pl-8">
                                 <div className="absolute -left-[11px] w-5 h-5 rounded-full bg-blue-500 ring-4 ring-slate-950 shadow-lg shadow-blue-500/50"></div>
-                                <h3 className="text-xl font-bold text-white mb-1">2026.03 (이사)</h3>
-                                <p className="text-blue-300 text-sm font-bold">부평 해모로 입주. 실거주 시작하며 이자 비용 방어.</p>
+                                <h3 className="text-xl font-bold text-white mb-1">2026.03 (이사 & 실거주)</h3>
+                                <p className="text-blue-300 text-sm font-bold">부평 해모로 입주. <br/>이자 비용 방어하며 안정적 육아 시작.</p>
                             </div>
                             <div className="relative pl-8">
                                 <div className="absolute -left-[9px] w-4 h-4 rounded-full bg-slate-600 ring-4 ring-slate-950"></div>
                                 <h3 className="text-lg font-bold text-slate-300 mb-1">2028 ~ 2029 (호재 가시화)</h3>
-                                <p className="text-slate-400 text-sm">
-                                    <span className="text-green-400 font-bold">굴포천 복원 완료 & 캠프마켓 공원화</span> 본격 진행.<br/>
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    🏗️ <strong>굴포천 생태하천 복원 완료</strong><br/>
+                                    🌳 <strong>캠프마켓 공원화 단계적 개방</strong><br/>
                                     환경 개선으로 단지 가치 상승 (비과세 요건 충족 구간).
                                 </p>
                             </div>
                             <div className="relative pl-8">
                                 <div className="absolute -left-[11px] w-5 h-5 rounded-full bg-purple-500 ring-4 ring-slate-950 shadow-lg shadow-purple-500/50"></div>
-                                <h3 className="text-xl font-bold text-white mb-1">2030 (GTX 완공 & Exit)</h3>
+                                <h3 className="text-xl font-bold text-white mb-1">2030 (GTX-B 개통 & Exit)</h3>
                                 <p className="text-purple-300 text-sm font-bold">
-                                    GTX-B 개통. 예상 매도가 8억 (시세차익 2.2억).<br/>
-                                    기존 자산 + 차익 + 저축액 = <span className="text-white border-b border-purple-500">서울 상급지 이동</span>
+                                    서울역 20분대 주파 실현.<br/>
+                                    예상 매도가 8억 (시세차익 2.2억 실현) → <span className="text-white border-b border-purple-500">서울 상급지 이동</span>
                                 </p>
                             </div>
                         </div>
@@ -887,11 +902,11 @@
                 <section id="action" className="bg-gradient-to-b from-slate-900 to-slate-950">
                     <div className="max-w-4xl mx-auto w-full px-6 text-center animate-enter">
                         <h2 className="text-3xl font-bold text-white mb-8">Action Plan (실전 가이드)</h2>
-                        <div className="bg-slate-800 border border-slate-700 rounded-3xl p-8 text-left mb-16 shadow-2xl min-h-[400px]">
+                        <div className="bg-slate-800 border border-slate-700 rounded-3xl p-8 text-left mb-16 shadow-2xl min-h-[450px]">
                              <div className="flex flex-wrap gap-4 mb-8 border-b border-slate-700 pb-4">
                                 <button onClick={()=>setTab('check')} className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${tab==='check' ? 'text-white bg-blue-600 shadow-lg' : 'text-slate-400 hover:text-white bg-slate-700/50'}`}>✅ 임장 체크리스트</button>
-                                <button onClick={()=>setTab('qna')} className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${tab==='qna' ? 'text-white bg-blue-600 shadow-lg' : 'text-slate-400 hover:text-white bg-slate-700/50'}`}>🗣️ 중개사 질문 (기싸움)</button>
-                                <button onClick={()=>setTab('dong')} className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${tab==='dong' ? 'text-white bg-blue-600 shadow-lg' : 'text-slate-400 hover:text-white bg-slate-700/50'}`}>🏢 로얄동 전략</button>
+                                <button onClick={()=>setTab('qna')} className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${tab==='qna' ? 'text-white bg-blue-600 shadow-lg' : 'text-slate-400 hover:text-white bg-slate-700/50'}`}>🗣️ 중개사 질문</button>
+                                <button onClick={()=>setTab('dong')} className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${tab==='dong' ? 'text-white bg-blue-600 shadow-lg' : 'text-slate-400 hover:text-white bg-slate-700/50'}`}>🏢 추천 동 전략</button>
                             </div>
                             
                             {tab === 'check' && (
@@ -939,21 +954,21 @@
                                 <div className="space-y-6 animate-enter">
                                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className="bg-yellow-500 text-black font-bold px-2 py-1 rounded text-xs">1순위</span>
+                                            <span className="bg-yellow-500 text-black font-bold px-2 py-1 rounded text-xs">1순위 (로얄)</span>
                                             <strong className="text-yellow-400 text-lg">108동, 109동, 110동 (중층 이상)</strong>
                                         </div>
-                                        <p className="text-slate-300 text-sm">단지 중앙에 위치해 <span className="text-white font-bold">소음이 없고</span>, 단지 내 조경 뷰가 확보되어 <span className="text-white font-bold">환금성</span>이 가장 뛰어납니다.</p>
+                                        <p className="text-slate-300 text-sm">단지 중앙에 위치해 <span className="text-white font-bold">소음이 없고</span>, 단지 내 조경 뷰가 확보되어 <span className="text-white font-bold">환금성</span>이 가장 뛰어납니다. (필수 확보)</p>
                                     </div>
                                     <div className="p-4 bg-slate-700/50 border border-slate-600 rounded-xl">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className="bg-slate-500 text-white font-bold px-2 py-1 rounded text-xs">2순위</span>
+                                            <span className="bg-slate-500 text-white font-bold px-2 py-1 rounded text-xs">2순위 (가성비)</span>
                                             <strong className="text-slate-300 text-lg">111동, 112동</strong>
                                         </div>
-                                        <p className="text-slate-400 text-sm">학교와 가깝고 조용합니다. 가성비 매물을 노릴 때 적합한 차선책입니다.</p>
+                                        <p className="text-slate-400 text-sm">학교와 가깝고 조용합니다. 예산이 타이트할 경우 노리기 좋은 차선책입니다.</p>
                                     </div>
                                     <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl opacity-70">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className="bg-red-500 text-white font-bold px-2 py-1 rounded text-xs">비추천</span>
+                                            <span className="bg-red-500 text-white font-bold px-2 py-1 rounded text-xs">비추천 (Avoid)</span>
                                             <strong className="text-red-300 text-lg">도로변 저층 / 철길 직면 라인</strong>
                                         </div>
                                         <p className="text-slate-500 text-sm">소음, 분진, 사생활 침해 우려가 있어 매도 시 어려움을 겪을 수 있습니다.</p>
