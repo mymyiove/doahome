@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project D.H: 우리 가족을 위한 최선의 선택 (Final Version)</title>
+    <title>Project D.H: 우리 가족을 위한 최선의 선택</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -34,7 +34,7 @@
     <style>
         body {
             font-family: 'Pretendard', sans-serif;
-            background-color: #0f172a; /* Slate-900 Base */
+            background-color: #0f172a; /* Slate-900 */
             color: #f8fafc;
             overflow-x: hidden;
         }
@@ -53,53 +53,64 @@
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Bloom Effect Text */
-        @keyframes bloom {
-            0%, 100% { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3); color: #ffffff; }
-            50% { text-shadow: 0 0 20px rgba(139, 92, 246, 0.8), 0 0 30px rgba(139, 92, 246, 0.6); color: #e0e7ff; }
+        /* Bloom & Glow Effects */
+        .text-bloom { text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        
+        .hover-glow {
+            transition: all 0.3s ease;
         }
-        .text-bloom {
-            animation: bloom 3s infinite ease-in-out;
-        }
-
-        /* Hover Float Effect */
-        .hover-lift {
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-        }
-        .hover-lift:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
-            border-color: rgba(96, 165, 250, 0.5);
+        .hover-glow:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+            border-color: rgba(96, 165, 250, 0.4);
+            transform: translateY(-4px);
         }
 
-        /* Pulse Glow Effect for Buttons */
+        .pulse-btn { animation: pulse-glow 2s infinite; }
         @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-        }
-        .animate-pulse-glow {
-            animation: pulse-glow 2s infinite;
         }
 
         /* Glassmorphism */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.6);
+            background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        #map-container {
+        /* Map Styling */
+        #infra-map {
             height: 100%;
             width: 100%;
-            min-height: 550px; /* Force height for stability */
+            min-height: 600px;
             border-radius: 1rem;
             z-index: 0;
         }
         
+        /* Fixed: Light Popup for Dark Map */
+        .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: #0f172a !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+            font-family: 'Pretendard', sans-serif !important;
+        }
+        .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.95) !important;
+        }
+        .leaflet-popup-content strong {
+            color: #2563eb !important;
+            font-size: 15px !important;
+        }
+        .leaflet-popup-content span {
+            color: #475569 !important;
+            font-weight: 600 !important;
+        }
+
         /* Animations */
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-enter {
@@ -108,33 +119,9 @@
         }
         .delay-100 { animation-delay: 0.1s; }
         .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
         
-        /* Map Control Button */
-        .map-control-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: white;
-            color: #0f172a;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .map-control-btn:hover {
-            background: #f1f5f9;
-            transform: translateY(-2px);
-        }
-        .map-control-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -178,6 +165,9 @@
             ShoppingBag: () => <i data-lucide="shopping-bag"></i>,
             Landmark: () => <i data-lucide="landmark"></i>,
             Hand: () => <i data-lucide="hand"></i>,
+            School: () => <i data-lucide="school"></i>,
+            Hospital: () => <i data-lucide="activity"></i>,
+            Book: () => <i data-lucide="book"></i>,
         };
 
         // --- Header ---
@@ -189,14 +179,12 @@
             useEffect(() => {
                 const handleScroll = () => {
                     setIsScrolled(window.scrollY > 50);
-                    
-                    // Simple Scroll Spy
-                    const sections = ['premise', 'analysis', 'strategy', 'infra', 'finance', 'action'];
+                    const sections = ['premise', 'analysis', 'strategy', 'infra', 'daily', 'finance', 'action'];
                     for (const id of sections) {
                         const element = document.getElementById(id);
                         if (element) {
                             const rect = element.getBoundingClientRect();
-                            if (rect.top >= 0 && rect.top < 300) {
+                            if (rect.top >= 0 && rect.top < 400) {
                                 setActiveSection(id);
                                 break;
                             }
@@ -210,8 +198,9 @@
             const navs = [
                 { name: 'Why Now', href: '#premise', id: 'premise' },
                 { name: 'Analysis', href: '#analysis', id: 'analysis' },
-                { name: 'Strategic Choice', href: '#strategy', id: 'strategy' },
-                { name: 'Life & Map', href: '#infra', id: 'infra' },
+                { name: 'Strategy', href: '#strategy', id: 'strategy' },
+                { name: 'Life Map', href: '#infra', id: 'infra' },
+                { name: 'Daily', href: '#daily', id: 'daily' },
                 { name: 'Finance', href: '#finance', id: 'finance' },
                 { name: 'Action', href: '#action', id: 'action' },
             ];
@@ -261,7 +250,7 @@
                     <p className="text-slate-400 text-sm mt-4 mb-12">“지금의 편안함과, 미래의 선택권을 동시에 지키는 집”</p>
                     
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <a href="#analysis" className="px-8 py-4 bg-white text-slate-900 rounded-lg font-bold transition-all hover:bg-blue-50 flex items-center justify-center gap-2 shadow-xl hover:scale-105 animate-pulse-glow">
+                        <a href="#analysis" className="px-8 py-4 bg-white text-slate-900 rounded-lg font-bold transition-all hover:bg-blue-50 flex items-center justify-center gap-2 shadow-xl hover:scale-105 pulse-btn">
                             결정적 근거 보기 <Icons.ArrowRight size={18} />
                         </a>
                         <a href="#finance" className="px-8 py-4 bg-slate-800/50 text-slate-300 border border-slate-600 rounded-lg font-bold transition-all hover:bg-slate-800 hover:border-slate-400 flex items-center justify-center gap-2 backdrop-blur-sm">
@@ -280,8 +269,8 @@
                         <h2 className="text-3xl font-bold text-white mb-8 leading-tight">주거 안정이냐,<br/><span className="text-blue-400">자산 도약</span>이냐.</h2>
                         <p className="text-slate-400 mb-8 leading-relaxed text-lg">전세는 안전해 보이지만, 실제로는 <strong className="text-red-400">'인플레이션 헷지'를 포기하는 가장 비싼 선택</strong>입니다.</p>
                         <div className="space-y-6">
-                            <div className="glass-panel p-6 rounded-2xl border-red-500/20 hover-lift"><div className="flex gap-4"><div className="bg-red-500/20 p-3 rounded-lg text-red-400"><Icons.AlertTriangle /></div><div><h4 className="text-white font-bold mb-1">전세의 함정 (The Trap)</h4><p className="text-slate-400 text-sm">4억 보증금의 기회비용(2.5%)만 연 1,000만원.<br/>5년 뒤 자산은 그대로, 집값은 도망갑니다.</p></div></div></div>
-                            <div className="glass-panel p-6 rounded-2xl border-blue-500/20 hover-lift"><div className="flex gap-4"><div className="bg-blue-500/20 p-3 rounded-lg text-blue-400"><Icons.TrendingUp /></div><div><h4 className="text-white font-bold mb-1">매수의 기회 (The Chance)</h4><p className="text-slate-400 text-sm">국가 보증 2.5% 고정금리 (생애 1회).<br/>금융 시장에서 다시 나오기 힘든 '특혜'입니다.</p></div></div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-red-500/20 hover-glow"><div className="flex gap-4"><div className="bg-red-500/20 p-3 rounded-lg text-red-400"><Icons.AlertTriangle /></div><div><h4 className="text-white font-bold mb-1">전세의 함정 (The Trap)</h4><p className="text-slate-400 text-sm">4억 보증금의 기회비용(2.5%)만 연 1,000만원.<br/>5년 뒤 자산은 그대로, 집값은 도망갑니다.</p></div></div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-blue-500/20 hover-glow"><div className="flex gap-4"><div className="bg-blue-500/20 p-3 rounded-lg text-blue-400"><Icons.TrendingUp /></div><div><h4 className="text-white font-bold mb-1">매수의 기회 (The Chance)</h4><p className="text-slate-400 text-sm">국가 보증 2.5% 고정금리 (생애 1회).<br/>금융 시장에서 다시 나오기 힘든 '특혜'입니다.</p></div></div></div>
                         </div>
                     </div>
                     <div className="animate-enter delay-100">
@@ -319,9 +308,9 @@
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
                             <h4 className="font-bold text-white text-xl mb-6 text-center">3단계: 최종 비교군 (Top 3)</h4>
                             <div className="grid md:grid-cols-3 gap-4">
-                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-lift"><span className="block font-bold text-slate-300 mb-2">범박 일루미</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">지하철 부재로 상승 제한</p></div>
-                                <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-500/50 relative hover-lift"><span className="absolute -top-3 -right-3 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg">PICK</span><span className="block font-bold text-blue-400 mb-2">부평 해모로</span><p className="text-xs text-blue-300 font-bold">✅ 선정</p><p className="text-xs text-slate-400">과락 없는 유일한 육각형</p></div>
-                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-lift"><span className="block font-bold text-slate-300 mb-2">송내 자이</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">유흥가 인접, 아이 키우기 험함</p></div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-glow"><span className="block font-bold text-slate-300 mb-2">범박 일루미</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">지하철 부재로 상승 제한</p></div>
+                                <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-500/50 relative hover-glow"><span className="absolute -top-3 -right-3 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg">PICK</span><span className="block font-bold text-blue-400 mb-2">부평 해모로</span><p className="text-xs text-blue-300 font-bold">✅ 선정</p><p className="text-xs text-slate-400">과락 없는 유일한 육각형</p></div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-glow"><span className="block font-bold text-slate-300 mb-2">송내 자이</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">유흥가 인접, 아이 키우기 험함</p></div>
                             </div>
                         </div>
                     </div>
@@ -345,9 +334,9 @@
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
                             <div className="glass-panel rounded-3xl p-6 flex justify-center animate-enter delay-100 hover:border-blue-500/50 transition-colors"><div className="h-[350px] w-full"><ResponsiveContainer width="100%" height="100%"><RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}><PolarGrid stroke="#334155" /><PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }} /><PolarRadiusAxis angle={30} domain={[0, 100]} tick={false}/><Radar name="범박" dataKey="A" stroke="#64748b" fill="#64748b" fillOpacity={0.1} /><Radar name="해모로" dataKey="B" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} /><Radar name="송내" dataKey="C" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.1} /><Legend /><Tooltip contentStyle={{backgroundColor: '#0f172a', border: 'none'}} itemStyle={{color: '#fff'}}/></RadarChart></ResponsiveContainer></div></div>
                             <div className="space-y-4 animate-enter delay-200">
-                                <div className="glass-panel p-6 rounded-2xl border-blue-500/30 hover-lift"><h4 className="font-bold text-white mb-2">💎 투자가치 (90점)</h4><p className="text-sm text-slate-400">5억 후반 가격대는 안전마진 확보 구간. GTX 호재 간접 수혜.</p></div>
-                                <div className="glass-panel p-6 rounded-2xl border-green-500/30 hover-lift"><h4 className="font-bold text-white mb-2">👶 육아환경 (86점)</h4><p className="text-sm text-slate-400">평지 공원형 단지. 부개공원 인접. 유해시설 없음.</p></div>
-                                <div className="glass-panel p-6 rounded-2xl border-yellow-500/30 hover-lift"><h4 className="font-bold text-white mb-2">🚇 출퇴근 (75점)</h4><p className="text-sm text-slate-400">부개역 도보 10분. 송내보단 느리지만 신도림까지 물리적 거리가 가까움.</p></div>
+                                <div className="glass-panel p-6 rounded-2xl border-blue-500/30 hover-glow"><h4 className="font-bold text-white mb-2">💎 투자가치 (90점)</h4><p className="text-sm text-slate-400">5억 후반 가격대는 안전마진 확보 구간. GTX 호재 간접 수혜.</p></div>
+                                <div className="glass-panel p-6 rounded-2xl border-green-500/30 hover-glow"><h4 className="font-bold text-white mb-2">👶 육아환경 (86점)</h4><p className="text-sm text-slate-400">평지 공원형 단지. 부개공원 인접. 유해시설 없음.</p></div>
+                                <div className="glass-panel p-6 rounded-2xl border-yellow-500/30 hover-glow"><h4 className="font-bold text-white mb-2">🚇 출퇴근 (75점)</h4><p className="text-sm text-slate-400">부개역 도보 10분. 송내보단 느리지만 신도림까지 물리적 거리가 가까움.</p></div>
                                 <button onClick={() => setShowDetail(!showDetail)} className="w-full py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors flex justify-center items-center gap-2 font-bold shadow-lg">{showDetail ? "상세 비교표 접기" : "단지별 상세 점수표 펼쳐보기"} <Icons.List size={16}/></button>
                             </div>
                         </div>
@@ -461,87 +450,197 @@
             );
         };
 
-        // --- Section 6: Life & Infra (New Full Color Map) ---
+        // --- Section 6: Life & Infra (Leaflet with List Interaction) ---
         const InfraSection = () => {
-             const [isInteractive, setIsInteractive] = useState(false);
              const mapRef = useRef(null);
+             const markersRef = useRef({});
+
+             const places = [
+                { name: '부개역 (1호선)', lat: 37.4885, lng: 126.7410, type: 'subway' },
+                { name: '부평역 (GTX-B 예정)', lat: 37.4895, lng: 126.7240, type: 'subway' },
+                { name: '부평 SK뷰 해모로 (Home)', lat: 37.492027, lng: 126.735374, type: 'home' },
+                { name: '부개서초등학교', lat: 37.490067, lng: 126.733952, type: 'school' },
+                { name: '인천부흥초등학교', lat: 37.496500, lng: 126.725500, type: 'school' },
+                { name: '이마트24 편의점', lat: 37.490254, lng: 126.732257, type: 'mart' },
+                { name: '한아름 마트', lat: 37.492868, lng: 126.732160, type: 'mart' },
+                { name: '신용할인마트', lat: 37.493719, lng: 126.739037, type: 'mart' },
+                { name: '롯데마트 부평역점', lat: 37.489638, lng: 126.723432, type: 'mart' },
+                { name: '캠프마켓 (공원화 예정)', lat: 37.493930, lng: 126.713880, type: 'park' },
+                { name: '가톨릭대 인천성모병원', lat: 37.484700, lng: 126.722000, type: 'hospital' },
+                { name: '상동 호수공원', lat: 37.505700, lng: 126.742000, type: 'park' },
+                { name: '웅진플레이도시', lat: 37.502000, lng: 126.746000, type: 'fun' },
+                { name: '부개도서관', lat: 37.493500, lng: 126.737200, type: 'book' },
+                { name: '대동어린이집', lat: 37.491500, lng: 126.738000, type: 'daycare' },
+                { name: '부개어린이집', lat: 37.495000, lng: 126.735000, type: 'daycare' },
+                { name: '부개2동 하나어린이집', lat: 37.492000, lng: 126.733000, type: 'daycare' },
+             ];
+
+             const categories = {
+                home: { color: '#2563eb', label: '단지', icon: Icons.Home },
+                school: { color: '#16a34a', label: '학교', icon: Icons.School },
+                daycare: { color: '#f59e0b', label: '어린이집', icon: Icons.Baby },
+                mart: { color: '#db2777', label: '마트/편의', icon: Icons.ShoppingBag },
+                park: { color: '#22c55e', label: '공원', icon: Icons.Trees },
+                hospital: { color: '#ef4444', label: '병원', icon: Icons.Hospital },
+                fun: { color: '#8b5cf6', label: '여가', icon: Icons.Heart },
+                book: { color: '#0ea5e9', label: '도서관', icon: Icons.Book },
+                subway: { color: '#6366f1', label: '지하철', icon: Icons.Train },
+             };
+
+             // Haversine formula for distance
+             const getDistance = (lat1, lon1, lat2, lon2) => {
+                const R = 6371; // km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const d = R * c;
+                return Math.round(d * 1000); // meters
+             };
+
+             const home = places[2]; // 해모로 (Updated index due to added stations)
 
              useEffect(() => {
-                const lat = 37.489, lng = 126.736; // Adjusted center for better view
-                const container = document.getElementById('map-container');
-                if (!container || container._leaflet_id) return;
+                const container = document.getElementById('infra-map');
+                if (!container) return;
                 
-                const map = L.map('map-container', {
-                    dragging: false,
+                if (mapRef.current) {
+                    mapRef.current.remove();
+                }
+
+                const map = L.map('infra-map', {
+                    center: [home.lat, home.lng],
+                    zoom: 15,
                     scrollWheelZoom: false,
-                    touchZoom: false,
-                    doubleClickZoom: false
-                }).setView([lat, lng], 13); // Changed zoom to 13
-                
+                    dragging: true
+                });
+
                 mapRef.current = map;
-                
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB', maxZoom: 19 }).addTo(map);
-                
-                // Force invalidateSize to prevent rendering issues
-                setTimeout(() => { map.invalidateSize(); }, 300);
 
-                const createLabel = (text, color) => L.divIcon({
-                    className: '',
-                    html: `<div style="background-color: ${color}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid white;">${text}</div>`,
-                    iconSize: [100, 20],
-                    iconAnchor: [50, 25]
+                L.tileLayer(
+                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                    { attribution: '&copy; CartoDB', maxZoom: 19 }
+                ).addTo(map);
+
+                // Walking Radius Circles
+                L.circle([home.lat, home.lng], {
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.1,
+                    radius: 700, 
+                    weight: 1,
+                    dashArray: '5, 5'
+                }).addTo(map).bindPopup("도보 10분 반경");
+
+                L.circle([home.lat, home.lng], {
+                    color: '#60a5fa',
+                    fillColor: '#60a5fa',
+                    fillOpacity: 0.05,
+                    radius: 1050, 
+                    weight: 1,
+                    dashArray: '5, 5'
+                }).addTo(map).bindPopup("도보 15분 반경");
+
+                places.forEach((p, i) => {
+                    const marker = L.circleMarker([p.lat, p.lng], {
+                        radius: p.type === 'home' ? 12 : p.type === 'subway' ? 9 : 7,
+                        color: 'white',
+                        weight: 2,
+                        fillColor: categories[p.type]?.color || '#333',
+                        fillOpacity: 1,
+                    })
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="text-align:center;">
+                            <strong style="font-size:15px; display:block; margin-bottom:4px;">${p.name}</strong>
+                            <span style="font-size:12px; color:#475569;">
+                                ${categories[p.type]?.label} · 직선거리 ${getDistance(home.lat, home.lng, p.lat, p.lng)}m
+                            </span>
+                        </div>
+                    `);
+                    
+                    if (p.type === 'home') marker.openPopup();
+                    markersRef.current[i] = marker;
                 });
 
-                // Home
-                const homeIcon = L.divIcon({
-                    html: '<div style="background-color: #2563eb; color: white; padding: 8px 12px; border-radius: 30px; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 10px rgba(37,99,235,0.5); white-space: nowrap; font-size: 14px; display: flex; align-items: center; gap: 5px;">🏠 부평 SK뷰 해모로</div>',
-                    className: '', iconSize: [160, 40], iconAnchor: [80, 20]
-                });
-                L.marker([37.4875, 126.7340], {icon: homeIcon}).addTo(map).bindPopup('<b>우리의 보금자리</b>').openPopup();
-                
-                // Infra with Labels
-                L.marker([37.4885, 126.7410], {icon: createLabel('🚇 부개역 (도보 12분)', '#3b82f6')}).addTo(map);
-                L.marker([37.4895, 126.7240], {icon: createLabel('🚅 부평역 (GTX-B)', '#3b82f6')}).addTo(map);
-                L.marker([37.4900, 126.7260], {icon: createLabel('🛒 롯데마트 (차량 5분)', '#eab308')}).addTo(map);
-                L.marker([37.5060, 126.7420], {icon: createLabel('🌳 상동 호수공원', '#22c55e')}).addTo(map);
-                L.marker([37.5020, 126.7460], {icon: createLabel('🎡 웅진플레이도시', '#a855f7')}).addTo(map);
-                L.marker([37.4950, 126.7200], {icon: createLabel('🏞️ 캠프마켓 공원', '#22c55e')}).addTo(map);
-                L.marker([37.4860, 126.7335], {icon: createLabel('🏫 부개서초 (도보 3분)', '#f97316')}).addTo(map);
+                setTimeout(() => map.invalidateSize(), 300);
 
+                return () => {
+                    if (mapRef.current) {
+                        mapRef.current.remove();
+                        mapRef.current = null;
+                    }
+                };
             }, []);
 
-            const toggleInteraction = () => {
-                if (!mapRef.current) return;
-                if (isInteractive) {
-                    mapRef.current.dragging.disable();
-                    mapRef.current.scrollWheelZoom.disable();
-                    mapRef.current.touchZoom.disable();
-                } else {
-                    mapRef.current.dragging.enable();
-                    mapRef.current.scrollWheelZoom.enable();
-                    mapRef.current.touchZoom.enable();
+            const handleItemClick = (index, lat, lng) => {
+                if (mapRef.current) {
+                    mapRef.current.flyTo([lat, lng], 16, { duration: 1.5 });
+                    const marker = markersRef.current[index];
+                    if (marker) marker.openPopup();
                 }
-                setIsInteractive(!isInteractive);
             };
 
             return (
-                <section id="infra" className="bg-slate-900">
-                    <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
-                        <div className="h-[550px] rounded-3xl overflow-hidden border border-slate-700 shadow-2xl animate-enter order-2 lg:order-1 relative group">
-                            <div id="map-container"></div>
-                            <button 
-                                onClick={toggleInteraction}
-                                className={`map-control-btn ${isInteractive ? 'active' : ''}`}
-                            >
-                                {isInteractive ? '🖐️ 지도 고정하기' : '🖐️ 지도 조작하기'}
-                            </button>
+                <section id="infra" className="bg-slate-950">
+                    <div className="max-w-7xl mx-auto w-full px-6 animate-enter">
+                        <div className="mb-12 text-center">
+                            <h2 className="text-3xl font-bold text-white mb-4">내 집 앞 생활권 (Life Map)</h2>
+                            <p className="text-slate-400">반경 1km(도보 15분) 내에 모든 것이 있습니다.</p>
                         </div>
-                        <div className="space-y-8 animate-enter delay-100 order-1 lg:order-2">
-                            <div><h2 className="text-3xl font-bold text-white mb-4">생활권: 꽉 찬 인프라</h2><p className="text-slate-400">마트, 공원, GTX, 학교가 모두 반경 2km 내에 있습니다.</p></div>
-                            <div className="space-y-4">
-                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-blue-600/20 p-3 rounded-lg text-blue-400"><Icons.Train size={24}/></div><div><h3 className="text-white font-bold text-lg">GTX-B 부평역 (2030 예정)</h3><p className="text-slate-400 text-sm mt-1">서울역까지 20분대 주파. 수도권 서부 교통의 심장.</p></div></div>
-                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-green-600/20 p-3 rounded-lg text-green-400"><Icons.Trees size={24}/></div><div><h3 className="text-white font-bold text-lg">캠프마켓 & 호수공원</h3><p className="text-slate-400 text-sm mt-1">미군기지가 초대형 공원으로. 상동 호수공원과 더불어 완벽한 녹지 축.</p></div></div>
-                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-purple-600/20 p-3 rounded-lg text-purple-400"><Icons.Landmark size={24}/></div><div><h3 className="text-white font-bold text-lg">웅진플레이도시 & 인프라</h3><p className="text-slate-400 text-sm mt-1">워터파크, 아쿠아리움이 집 근처. 아이 키우기에 이보다 좋을 수 없습니다.</p></div></div>
+
+                        <div className="grid lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 h-[650px] rounded-3xl overflow-hidden border border-slate-700 shadow-2xl relative z-0">
+                                <div id="infra-map" style={{ height: '100%', width: '100%' }}></div>
+                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-2 rounded-lg shadow text-xs font-bold text-slate-800 z-[500] flex flex-col gap-1">
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full border border-blue-500 bg-blue-500/20"></div> 도보 10분</div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full border border-blue-300 bg-blue-300/20"></div> 도보 15분</div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-4 h-[650px]">
+                                {/* Commute Info Card (Restored) */}
+                                <div className="bg-slate-900 p-5 rounded-2xl border border-blue-500/30 shadow-lg hover-glow">
+                                    <h3 className="font-bold text-white mb-3 text-sm flex items-center gap-2">
+                                        <Icons.Clock className="text-blue-400" size={16}/> 예상 출퇴근 소요시간
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                            <span className="text-slate-400 text-sm">남편 (시청)</span>
+                                            <span className="text-blue-400 font-bold text-sm">약 58분 <span className="text-[10px] text-slate-500 font-normal">(도보+1호선)</span></span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-400 text-sm">아내 (신도림)</span>
+                                            <span className="text-pink-400 font-bold text-sm">약 38분 <span className="text-[10px] text-slate-500 font-normal">(도보+1호선)</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* List Container */}
+                                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col flex-1 overflow-hidden">
+                                    <h3 className="font-bold text-white mb-4 text-sm flex items-center gap-2"><Icons.MapPin className="text-green-500" size={16}/> 주요 인프라 리스트</h3>
+                                    <div className="overflow-y-auto pr-2 space-y-2 custom-scrollbar flex-1">
+                                        {places.map((p, i) => (
+                                            <div 
+                                                key={i}
+                                                onClick={() => handleItemClick(i, p.lat, p.lng)}
+                                                className={`p-3 rounded-xl border cursor-pointer transition-all group flex items-center gap-3 ${p.type === 'subway' ? 'bg-blue-900/20 border-blue-500/30' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800'}`}
+                                            >
+                                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: `${categories[p.type]?.color}20`, color: categories[p.type]?.color}}>
+                                                    {categories[p.type]?.icon ? React.createElement(categories[p.type].icon, {size: 14}) : <Icons.MapPin size={14}/>}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <strong className="text-slate-200 text-xs block truncate group-hover:text-blue-400 transition-colors">{p.name}</strong>
+                                                    <div className="flex justify-between items-center mt-0.5">
+                                                        <span className="text-[10px] text-slate-500">{categories[p.type]?.label}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400">{getDistance(home.lat, home.lng, p.lat, p.lng)}m</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -575,8 +674,8 @@
                             <p className="text-slate-400">우리가 실제로 겪게 될 매일의 일상입니다.</p>
                         </div>
                         <div className="grid md:grid-cols-2 gap-8 animate-enter delay-100">
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-pink-400 hover-lift"><h3 className="text-xl font-bold text-pink-400 mb-6 flex items-center gap-2"><Icons.User /> 아내 (신도림)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{wifeSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-pink-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-pink-400"/> {s.event}</div></div>))}</div></div>
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-blue-400 hover-lift"><h3 className="text-xl font-bold text-blue-400 mb-6 flex items-center gap-2"><Icons.User /> 남편 (시청)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{husbandSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-blue-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-blue-400"/> {s.event}</div></div>))}</div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-pink-400 hover-glow"><h3 className="text-xl font-bold text-pink-400 mb-6 flex items-center gap-2"><Icons.User /> 아내 (신도림)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{wifeSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-pink-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-pink-400"/> {s.event}</div></div>))}</div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-blue-400 hover-glow"><h3 className="text-xl font-bold text-blue-400 mb-6 flex items-center gap-2"><Icons.User /> 남편 (시청)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{husbandSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-blue-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-blue-400"/> {s.event}</div></div>))}</div></div>
                         </div>
                     </div>
                 </section>
@@ -609,12 +708,12 @@
                             </div>
                         </div>
                         <div className="space-y-6">
-                            <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-xl text-center hover-lift">
+                            <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-xl text-center hover-glow">
                                 <p className="text-slate-500 text-sm mb-1">매월 우리가 낼 돈 (2.5%)</p>
                                 <div className="text-4xl font-extrabold text-white mb-4">{new Intl.NumberFormat('ko-KR').format(paySpecial)}원</div>
                                 <div className="bg-blue-900/30 rounded-xl p-3 border border-blue-500/30"><p className="text-blue-400 text-sm font-bold">월 {new Intl.NumberFormat('ko-KR').format(monthlySave)}원 세이브!</p></div>
                             </div>
-                            <div className="glass-panel p-6 rounded-2xl hover-lift">
+                            <div className="glass-panel p-6 rounded-2xl hover-glow">
                                 <h4 className="text-white font-bold mb-4 border-b border-slate-700 pb-2">💰 5년 후 예상 총 수익</h4>
                                 <div className="flex justify-between mb-2 text-sm"><span className="text-slate-400">이자 절감액 (5년)</span><span className="text-blue-400">+{new Intl.NumberFormat('ko-KR').format(totalSave/10000)}만원</span></div>
                                 <div className="flex justify-between mb-2 text-sm"><span className="text-slate-400">자산 상승분 (예상)</span><span className="text-blue-400">+{new Intl.NumberFormat('ko-KR').format(assetGrowth/10000)}만원</span></div>
