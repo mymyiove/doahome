@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project D.H: 우리 가족을 위한 최선의 선택 (Final Version)</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Prop-types -->
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0f172a; /* Slate-900 Base */
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 1.5rem;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Bloom Effect Text */
+        @keyframes bloom {
+            0%, 100% { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3); color: #ffffff; }
+            50% { text-shadow: 0 0 20px rgba(139, 92, 246, 0.8), 0 0 30px rgba(139, 92, 246, 0.6); color: #e0e7ff; }
+        }
+        .text-bloom {
+            animation: bloom 3s infinite ease-in-out;
+        }
+
+        /* Hover Float Effect */
+        .hover-lift {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
+            border-color: rgba(96, 165, 250, 0.5);
+        }
+
+        /* Pulse Glow Effect for Buttons */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #map-container {
+            height: 100%;
+            width: 100%;
+            min-height: 550px; /* Force height for stability */
+            border-radius: 1rem;
+            z-index: 0;
+        }
+        
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-enter {
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        
+        /* Map Control Button */
+        .map-control-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            color: #0f172a;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .map-control-btn:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+        .map-control-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const Recharts = window.Recharts || {
+            LineChart: () => null, Line: () => null, BarChart: () => null, Bar: () => null, 
+            AreaChart: () => null, Area: () => null, XAxis: () => null, YAxis: () => null, 
+            CartesianGrid: () => null, Tooltip: () => null, ResponsiveContainer: ({children}) => <div>{children}</div>, 
+            Radar: () => null, RadarChart: () => null, PolarGrid: () => null, 
+            PolarAngleAxis: () => null, PolarRadiusAxis: () => null, Legend: () => null
+        };
+        const { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend } = Recharts;
+
+        // --- Icons ---
+        const Icons = {
+            Home: () => <i data-lucide="home"></i>,
+            TrendingUp: () => <i data-lucide="trending-up"></i>,
+            AlertTriangle: () => <i data-lucide="alert-triangle"></i>,
+            CheckCircle: () => <i data-lucide="check-circle-2"></i>,
+            MapPin: () => <i data-lucide="map-pin"></i>,
+            Train: () => <i data-lucide="train"></i>,
+            Baby: () => <i data-lucide="baby"></i>,
+            Wallet: () => <i data-lucide="wallet"></i>,
+            ArrowRight: () => <i data-lucide="arrow-right"></i>,
+            Menu: () => <i data-lucide="menu"></i>,
+            X: () => <i data-lucide="x"></i>,
+            Search: () => <i data-lucide="search"></i>,
+            ShieldAlert: () => <i data-lucide="shield-alert"></i>,
+            Heart: () => <i data-lucide="heart"></i>,
+            Clock: () => <i data-lucide="clock"></i>,
+            Trees: () => <i data-lucide="trees"></i>,
+            Maximize: () => <i data-lucide="maximize"></i>,
+            List: () => <i data-lucide="list"></i>,
+            Calendar: () => <i data-lucide="calendar"></i>,
+            Coffee: () => <i data-lucide="coffee"></i>,
+            Briefcase: () => <i data-lucide="briefcase"></i>,
+            User: () => <i data-lucide="user"></i>,
+            ShoppingBag: () => <i data-lucide="shopping-bag"></i>,
+            Landmark: () => <i data-lucide="landmark"></i>,
+            Hand: () => <i data-lucide="hand"></i>,
+        };
+
+        // --- Header ---
+        const Header = () => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [isOpen, setIsOpen] = useState(false);
+            const [activeSection, setActiveSection] = useState('premise');
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 50);
+                    
+                    // Simple Scroll Spy
+                    const sections = ['premise', 'analysis', 'strategy', 'infra', 'finance', 'action'];
+                    for (const id of sections) {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            const rect = element.getBoundingClientRect();
+                            if (rect.top >= 0 && rect.top < 300) {
+                                setActiveSection(id);
+                                break;
+                            }
+                        }
+                    }
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const navs = [
+                { name: 'Why Now', href: '#premise', id: 'premise' },
+                { name: 'Analysis', href: '#analysis', id: 'analysis' },
+                { name: 'Strategic Choice', href: '#strategy', id: 'strategy' },
+                { name: 'Life & Map', href: '#infra', id: 'infra' },
+                { name: 'Finance', href: '#finance', id: 'finance' },
+                { name: 'Action', href: '#action', id: 'action' },
+            ];
+
+            return (
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-slate-950/90 backdrop-blur border-b border-white/10 py-3' : 'bg-transparent py-5'}`}>
+                    <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+                        <a href="#" className="font-bold text-xl tracking-tight flex items-center gap-2 text-white hover:text-blue-400 transition-colors">
+                            <span className="bg-blue-600 w-6 h-6 rounded flex items-center justify-center text-xs shadow-lg shadow-blue-500/50">D</span> Project D.H
+                        </a>
+                        <div className="hidden md:flex gap-8">
+                            {navs.map(n => (
+                                <a 
+                                    key={n.name} 
+                                    href={n.href} 
+                                    className={`text-sm font-bold uppercase tracking-wider transition-all ${activeSection === n.id ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    {n.name}
+                                </a>
+                            ))}
+                        </div>
+                        <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>{isOpen ? <Icons.X /> : <Icons.Menu />}</button>
+                    </div>
+                    {isOpen && <div className="md:hidden absolute top-full left-0 w-full bg-slate-900 border-b border-white/10 p-4 flex flex-col gap-4 shadow-xl">{navs.map(n => <a key={n.name} href={n.href} onClick={() => setIsOpen(false)} className="text-slate-300 font-medium p-2 hover:bg-slate-800 rounded">{n.name}</a>)}</div>}
+                </nav>
+            );
+        };
+
+        // --- Hero ---
+        const Hero = () => (
+            <section className="bg-slate-950 relative overflow-hidden flex items-center justify-center min-h-screen">
+                <div className="absolute inset-0 z-0 opacity-40">
+                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/30 via-slate-950 to-slate-950"></div>
+                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
+                </div>
+                <div className="relative z-10 text-center px-6 max-w-5xl animate-enter">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/50 bg-blue-500/10 text-blue-400 text-xs font-bold mb-8 uppercase tracking-widest shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Investment Strategy 2025
+                    </div>
+                    <h1 className="text-5xl md:text-8xl font-bold text-white leading-tight mb-6 tracking-tight">
+                        Zero Regret,<br/>
+                        <span className="text-bloom">Maximum Value</span>
+                    </h1>
+                    <p className="text-xl text-slate-300 mb-2 max-w-2xl mx-auto font-light leading-relaxed">
+                        완벽한 집은 없습니다. 하지만 <strong className="text-white border-b border-blue-500">가장 후회 없는 선택</strong>은 있습니다.
+                    </p>
+                    <p className="text-slate-400 text-sm mt-4 mb-12">“지금의 편안함과, 미래의 선택권을 동시에 지키는 집”</p>
+                    
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <a href="#analysis" className="px-8 py-4 bg-white text-slate-900 rounded-lg font-bold transition-all hover:bg-blue-50 flex items-center justify-center gap-2 shadow-xl hover:scale-105 animate-pulse-glow">
+                            결정적 근거 보기 <Icons.ArrowRight size={18} />
+                        </a>
+                        <a href="#finance" className="px-8 py-4 bg-slate-800/50 text-slate-300 border border-slate-600 rounded-lg font-bold transition-all hover:bg-slate-800 hover:border-slate-400 flex items-center justify-center gap-2 backdrop-blur-sm">
+                            수익률 계산기 <Icons.Wallet size={18} />
+                        </a>
+                    </div>
+                </div>
+            </section>
+        );
+
+        // --- Section 1: Premise (Why Buy) ---
+        const PremiseSection = () => (
+            <section id="premise" className="bg-slate-950">
+                <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-20 items-center">
+                    <div className="animate-enter">
+                        <h2 className="text-3xl font-bold text-white mb-8 leading-tight">주거 안정이냐,<br/><span className="text-blue-400">자산 도약</span>이냐.</h2>
+                        <p className="text-slate-400 mb-8 leading-relaxed text-lg">전세는 안전해 보이지만, 실제로는 <strong className="text-red-400">'인플레이션 헷지'를 포기하는 가장 비싼 선택</strong>입니다.</p>
+                        <div className="space-y-6">
+                            <div className="glass-panel p-6 rounded-2xl border-red-500/20 hover-lift"><div className="flex gap-4"><div className="bg-red-500/20 p-3 rounded-lg text-red-400"><Icons.AlertTriangle /></div><div><h4 className="text-white font-bold mb-1">전세의 함정 (The Trap)</h4><p className="text-slate-400 text-sm">4억 보증금의 기회비용(2.5%)만 연 1,000만원.<br/>5년 뒤 자산은 그대로, 집값은 도망갑니다.</p></div></div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-blue-500/20 hover-lift"><div className="flex gap-4"><div className="bg-blue-500/20 p-3 rounded-lg text-blue-400"><Icons.TrendingUp /></div><div><h4 className="text-white font-bold mb-1">매수의 기회 (The Chance)</h4><p className="text-slate-400 text-sm">국가 보증 2.5% 고정금리 (생애 1회).<br/>금융 시장에서 다시 나오기 힘든 '특혜'입니다.</p></div></div></div>
+                        </div>
+                    </div>
+                    <div className="animate-enter delay-100">
+                        <div className="glass-panel p-8 rounded-3xl border-white/10 hover:border-blue-500/30 transition-colors">
+                            <h3 className="text-xl font-bold text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-2"><Icons.Search size={20}/> 우리 가족의 Constraint</h3>
+                            <div className="space-y-6">
+                                <div className="flex justify-between"><span className="text-slate-400">Budget Cap</span><span className="text-white font-bold text-xl">5.9억 (대출 4억)</span></div>
+                                <div className="flex justify-between"><span className="text-slate-400">Monthly Pay</span><span className="text-blue-400 font-bold text-xl">Max 180만원</span></div>
+                                <div className="pt-4 mt-4 border-t border-white/10">
+                                    <div className="text-xs text-slate-500 uppercase font-bold mb-3">Non-Negotiable</div>
+                                    <ul className="space-y-2 text-sm text-slate-300">
+                                        <li className="flex gap-2"><Icons.CheckCircle size={16} className="text-green-500"/> 시청/신도림 출퇴근 (Time-Limit)</li>
+                                        <li className="flex gap-2"><Icons.CheckCircle size={16} className="text-green-500"/> 유모차 가능한 완전 평지 & 대단지</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+
+        // --- Section 2: Funnel (Candidates) ---
+        const CandidateSection = () => (
+            <section id="candidates" className="bg-slate-950">
+                <div className="max-w-5xl mx-auto w-full text-center animate-enter">
+                    <h2 className="text-3xl font-bold text-white mb-4">논리적 소거 과정</h2>
+                    <p className="text-slate-400 mb-12">감정이 아닌 팩트로 압축했습니다.</p>
+                    <div className="space-y-4 max-w-3xl mx-auto text-left">
+                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center opacity-60 hover:opacity-100 transition-opacity"><h4 className="font-bold text-slate-300">1단계: 수도권 전체 (6억)</h4><span className="text-xs text-slate-500">❌ 외곽 신도시, 나홀로 제외</span></div>
+                        <div className="flex justify-center"><Icons.ArrowRight className="rotate-90 text-slate-600"/></div>
+                        <div className="glass-panel p-5 rounded-xl flex justify-between items-center opacity-80 hover:opacity-100 transition-opacity"><h4 className="font-bold text-slate-200">2단계: 1호선 라인 9개 단지</h4><span className="text-xs text-slate-400">안양/석수/명학 비교</span></div>
+                        <div className="flex justify-center"><Icons.ArrowRight className="rotate-90 text-slate-500"/></div>
+                        <div className="glass-panel p-8 rounded-2xl border-blue-500/50 relative overflow-hidden shadow-2xl">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                            <h4 className="font-bold text-white text-xl mb-6 text-center">3단계: 최종 비교군 (Top 3)</h4>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-lift"><span className="block font-bold text-slate-300 mb-2">범박 일루미</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">지하철 부재로 상승 제한</p></div>
+                                <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-500/50 relative hover-lift"><span className="absolute -top-3 -right-3 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg">PICK</span><span className="block font-bold text-blue-400 mb-2">부평 해모로</span><p className="text-xs text-blue-300 font-bold">✅ 선정</p><p className="text-xs text-slate-400">과락 없는 유일한 육각형</p></div>
+                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover-lift"><span className="block font-bold text-slate-300 mb-2">송내 자이</span><p className="text-xs text-red-400 font-bold">⚠️ 탈락</p><p className="text-xs text-slate-500">유흥가 인접, 아이 키우기 험함</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+
+        // --- Section 3: Analysis with Detail Table ---
+        const AnalysisSection = () => {
+             const [showDetail, setShowDetail] = useState(false);
+             const radarData = [ { subject: '투자가치', A: 84, B: 90, C: 78, fullMark: 100 }, { subject: '출퇴근', A: 45, B: 75, C: 92, fullMark: 100 }, { subject: '육아환경', A: 95, B: 86, C: 65, fullMark: 100 }, { subject: '단지상품', A: 90, B: 83, C: 70, fullMark: 100 }, { subject: '가격매력', A: 70, B: 95, C: 80, fullMark: 100 }, { subject: '환금성', A: 75, B: 85, C: 88, fullMark: 100 } ];
+             return (
+                <section id="analysis" className="bg-slate-950">
+                    <div className="max-w-7xl mx-auto w-full">
+                        <div className="flex justify-between items-end mb-12 animate-enter">
+                            <div>
+                                <h2 className="text-4xl font-bold text-white mb-2">종합 평가: <span className="text-blue-500">842점 (1위)</span></h2>
+                                <p className="text-slate-400">"왜 해모로여야 하는가?" 숫자로 증명된 압도적 밸런스입니다.</p>
+                            </div>
+                        </div>
+                        <div className="grid lg:grid-cols-2 gap-12 items-center">
+                            <div className="glass-panel rounded-3xl p-6 flex justify-center animate-enter delay-100 hover:border-blue-500/50 transition-colors"><div className="h-[350px] w-full"><ResponsiveContainer width="100%" height="100%"><RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}><PolarGrid stroke="#334155" /><PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }} /><PolarRadiusAxis angle={30} domain={[0, 100]} tick={false}/><Radar name="범박" dataKey="A" stroke="#64748b" fill="#64748b" fillOpacity={0.1} /><Radar name="해모로" dataKey="B" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} /><Radar name="송내" dataKey="C" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.1} /><Legend /><Tooltip contentStyle={{backgroundColor: '#0f172a', border: 'none'}} itemStyle={{color: '#fff'}}/></RadarChart></ResponsiveContainer></div></div>
+                            <div className="space-y-4 animate-enter delay-200">
+                                <div className="glass-panel p-6 rounded-2xl border-blue-500/30 hover-lift"><h4 className="font-bold text-white mb-2">💎 투자가치 (90점)</h4><p className="text-sm text-slate-400">5억 후반 가격대는 안전마진 확보 구간. GTX 호재 간접 수혜.</p></div>
+                                <div className="glass-panel p-6 rounded-2xl border-green-500/30 hover-lift"><h4 className="font-bold text-white mb-2">👶 육아환경 (86점)</h4><p className="text-sm text-slate-400">평지 공원형 단지. 부개공원 인접. 유해시설 없음.</p></div>
+                                <div className="glass-panel p-6 rounded-2xl border-yellow-500/30 hover-lift"><h4 className="font-bold text-white mb-2">🚇 출퇴근 (75점)</h4><p className="text-sm text-slate-400">부개역 도보 10분. 송내보단 느리지만 신도림까지 물리적 거리가 가까움.</p></div>
+                                <button onClick={() => setShowDetail(!showDetail)} className="w-full py-4 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors flex justify-center items-center gap-2 font-bold shadow-lg">{showDetail ? "상세 비교표 접기" : "단지별 상세 점수표 펼쳐보기"} <Icons.List size={16}/></button>
+                            </div>
+                        </div>
+                        {showDetail && (
+                            <div className="mt-8 glass-panel p-8 rounded-3xl animate-enter border-t-4 border-blue-500">
+                                <h4 className="text-white font-bold mb-6 text-xl text-center">🏆 3파전 끝장 비교 분석표</h4>
+                                <div className="overflow-x-auto"><table className="w-full text-left text-sm border-collapse"><thead><tr className="border-b border-slate-700 text-slate-400"><th className="p-4">평가 항목</th><th className="p-4">범박 일루미</th><th className="p-4 text-blue-400 font-bold bg-blue-500/10">부평 해모로 (Winner)</th><th className="p-4">송내 자이</th></tr></thead><tbody className="text-slate-300 divide-y divide-slate-800"><tr><td className="p-4 font-bold">1. 서울 접근성</td><td className="p-4 text-red-400">하 (지하철X)</td><td className="p-4 text-blue-300 bg-blue-500/10">중상 (1호선+버스)</td><td className="p-4 text-green-400">최상 (특급역세권)</td></tr><tr><td className="p-4 font-bold">2. 단지 규모/쾌적성</td><td className="p-4 text-green-400">최상 (3,700세대)</td><td className="p-4 text-blue-300 bg-blue-500/10">상 (1,500세대 평지)</td><td className="p-4">중 (1,000세대)</td></tr><tr><td className="p-4 font-bold">3. 주변 유해시설</td><td className="p-4 text-green-400">없음 (청정)</td><td className="p-4 text-blue-300 bg-blue-500/10">없음 (주거지역)</td><td className="p-4 text-red-400">많음 (유흥가/모텔)</td></tr><tr><td className="p-4 font-bold">4. 초등학교 통학</td><td className="p-4">도보 5분</td><td className="p-4 bg-blue-500/10">도보 5분 (부개서초)</td><td className="p-4">도보 7분</td></tr><tr><td className="p-4 font-bold">5. 가격 메리트</td><td className="p-4">6억 초반</td><td className="p-4 text-blue-300 bg-blue-500/10">5억 후반 (가장 저렴)</td><td className="p-4 text-red-400">6억 중반 (비쌈)</td></tr><tr><td className="p-4 font-bold">6. 환금성 (거래량)</td><td className="p-4">보통</td><td className="p-4 text-blue-300 bg-blue-500/10">우수 (투자+실거주)</td><td className="p-4">우수</td></tr></tbody></table></div>
+                                <div className="mt-4 text-center text-blue-300 font-bold bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">💡 결론: 해모로는 '치명적 단점'이 없는 유일한 단지입니다. 송내의 '환경 리스크', 범박의 '교통 리스크'를 모두 피한 최적의 해답입니다.</div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 4: Strategic Choice (New High-Impact Text) ---
+        const StrategicSection = () => {
+            return (
+                <section id="strategy" className="bg-slate-900">
+                    <div className="max-w-5xl mx-auto w-full px-6 animate-enter">
+                        <div className="text-center mb-16">
+                            <span className="text-blue-500 font-bold tracking-widest text-xs uppercase mb-4 block">Strategic Conclusion</span>
+                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                                범박은 "지금 살기 좋은 집"이고,<br/>
+                                해모로는 <span className="text-gradient">"다음 수를 남기는 집"</span>입니다.
+                            </h2>
+                            <p className="text-xl text-slate-400">이 차이가 인생 전체의 자산 격차를 만듭니다.</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Why Bumbox */}
+                            <div className="glass-panel p-8 rounded-3xl border-t-4 border-slate-600 opacity-80 hover:opacity-100 transition-opacity">
+                                <h3 className="text-xl font-bold text-slate-300 mb-6">와이프 분의 말씀이 맞습니다.</h3>
+                                <ul className="space-y-4 text-slate-400 text-sm leading-relaxed">
+                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>범박 일루미는 <strong>육아 관점 완성형</strong>입니다. (스타필드, 초품아, 4천세대)</span></li>
+                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>"지금 당장 살 집"만 놓고 보면 범박이 더 쾌적할 수 있습니다.</span></li>
+                                </ul>
+                                <div className="mt-6 p-4 bg-slate-800 rounded-xl text-xs text-slate-500">
+                                    📌 하지만 범박은 '살고 싶은 집'이지, '갈아타기 위해 사는 집'은 아닙니다. 상승장이 와도 외부 이벤트 없이는 반응이 느립니다.
+                                </div>
+                            </div>
+
+                            {/* Why Haemoro */}
+                            <div className="glass-panel p-8 rounded-3xl border-t-4 border-blue-500 relative overflow-hidden shadow-2xl">
+                                <div className="absolute top-0 right-0 p-4 opacity-10"><Icons.TrendingUp size={100} className="text-blue-500"/></div>
+                                <h3 className="text-xl font-bold text-blue-400 mb-6">그럼에도 해모로인 이유 (3가지)</h3>
+                                <ul className="space-y-5 text-slate-200 text-sm leading-relaxed">
+                                    <li className="flex gap-3">
+                                        <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Clock size={16}/></div>
+                                        <div>
+                                            <strong className="block mb-1">시간 자산의 확보</strong>
+                                            <span className="text-slate-400">범박의 버스 출근 vs 해모로의 1호선 도보. 5년간 1,000시간의 차이는 '아이와 보내는 시간'과 '부부의 여유'로 직결됩니다.</span>
+                                        </div>
+                                    </li>
+                                    <li className="flex gap-3">
+                                        <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.ArrowRight size={16}/></div>
+                                        <div>
+                                            <strong className="block mb-1">이동 가능한 자산</strong>
+                                            <span className="text-slate-400">서울로 가려면 '살기 좋은 집'보다 '팔기 쉬운 집'이 필요합니다. 1호선 라인은 거래량이 마르지 않습니다.</span>
+                                        </div>
+                                    </li>
+                                    <li className="flex gap-3">
+                                        <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Maximize size={16}/></div>
+                                        <div>
+                                            <strong className="block mb-1">상승장의 갭 메우기</strong>
+                                            <span className="text-slate-400">상승장은 같이 오르지 않습니다. 서울 → 1호선/GTX → 외곽 순으로 오릅니다. 해모로는 그 흐름의 앞단에 있습니다.</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 text-center p-6 glass-panel rounded-2xl">
+                            <p className="text-lg font-serif text-slate-200 italic">
+                                "범박은 <span className="text-slate-400">여기서 행복하게 늙어가는 집</span>이고,<br className="md:hidden"/> 해모로는 <span className="text-blue-400 font-bold">다음 선택(서울)을 가능하게 하는 집</span>입니다."
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 5: Risk (Honest Version) ---
+        const RiskSection = () => {
+            return (
+                <section id="risk" className="bg-slate-950">
+                    <div className="max-w-6xl mx-auto w-full px-6 animate-enter">
+                        <div className="mb-12 text-center">
+                            <h2 className="text-3xl font-bold text-white mb-4">해모로의 리스크 (Honest Review)</h2>
+                            <p className="text-slate-400">장점만 있는 집은 없습니다. 리스크를 알고 들어가는 것이 진짜 투자입니다.</p>
+                        </div>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white mb-2">1. GTX-B 지연 가능성</h4>
+                                <p className="text-sm text-slate-400 mb-3">개통이 늦어질 수 있습니다.</p>
+                                <p className="text-xs text-yellow-500 font-bold bg-yellow-500/10 p-2 rounded">🛡️ 그래도 1호선 본선 역세권의 가치는 변하지 않습니다. GTX는 '+@'일 뿐 전제조건이 아닙니다.</p>
+                            </div>
+                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white mb-2">2. 학군이 대박은 아님</h4>
+                                <p className="text-sm text-slate-400 mb-3">목동, 중계동급 학군은 아닙니다.</p>
+                                <p className="text-xs text-yellow-500 font-bold bg-yellow-500/10 p-2 rounded">🛡️ 초품아에 중학교도 인접해 '안정적'입니다. 아이가 클 때까지 거주하기에 부족함이 없습니다.</p>
+                            </div>
+                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white mb-2">3. 초반 급등 제한</h4>
+                                <p className="text-sm text-slate-400 mb-3">드라마틱한 폭등은 어렵습니다.</p>
+                                <p className="text-xs text-yellow-500 font-bold bg-yellow-500/10 p-2 rounded">🛡️ 대신 하방 경직성이 강합니다. 잃지 않는 투자가 우선인 우리 가족에게 적합합니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 6: Life & Infra (New Full Color Map) ---
+        const InfraSection = () => {
+             const [isInteractive, setIsInteractive] = useState(false);
+             const mapRef = useRef(null);
+
+             useEffect(() => {
+                const lat = 37.489, lng = 126.736; // Adjusted center for better view
+                const container = document.getElementById('map-container');
+                if (!container || container._leaflet_id) return;
+                
+                const map = L.map('map-container', {
+                    dragging: false,
+                    scrollWheelZoom: false,
+                    touchZoom: false,
+                    doubleClickZoom: false
+                }).setView([lat, lng], 13); // Changed zoom to 13
+                
+                mapRef.current = map;
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; CartoDB', maxZoom: 19 }).addTo(map);
+                
+                // Force invalidateSize to prevent rendering issues
+                setTimeout(() => { map.invalidateSize(); }, 300);
+
+                const createLabel = (text, color) => L.divIcon({
+                    className: '',
+                    html: `<div style="background-color: ${color}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid white;">${text}</div>`,
+                    iconSize: [100, 20],
+                    iconAnchor: [50, 25]
+                });
+
+                // Home
+                const homeIcon = L.divIcon({
+                    html: '<div style="background-color: #2563eb; color: white; padding: 8px 12px; border-radius: 30px; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 10px rgba(37,99,235,0.5); white-space: nowrap; font-size: 14px; display: flex; align-items: center; gap: 5px;">🏠 부평 SK뷰 해모로</div>',
+                    className: '', iconSize: [160, 40], iconAnchor: [80, 20]
+                });
+                L.marker([37.4875, 126.7340], {icon: homeIcon}).addTo(map).bindPopup('<b>우리의 보금자리</b>').openPopup();
+                
+                // Infra with Labels
+                L.marker([37.4885, 126.7410], {icon: createLabel('🚇 부개역 (도보 12분)', '#3b82f6')}).addTo(map);
+                L.marker([37.4895, 126.7240], {icon: createLabel('🚅 부평역 (GTX-B)', '#3b82f6')}).addTo(map);
+                L.marker([37.4900, 126.7260], {icon: createLabel('🛒 롯데마트 (차량 5분)', '#eab308')}).addTo(map);
+                L.marker([37.5060, 126.7420], {icon: createLabel('🌳 상동 호수공원', '#22c55e')}).addTo(map);
+                L.marker([37.5020, 126.7460], {icon: createLabel('🎡 웅진플레이도시', '#a855f7')}).addTo(map);
+                L.marker([37.4950, 126.7200], {icon: createLabel('🏞️ 캠프마켓 공원', '#22c55e')}).addTo(map);
+                L.marker([37.4860, 126.7335], {icon: createLabel('🏫 부개서초 (도보 3분)', '#f97316')}).addTo(map);
+
+            }, []);
+
+            const toggleInteraction = () => {
+                if (!mapRef.current) return;
+                if (isInteractive) {
+                    mapRef.current.dragging.disable();
+                    mapRef.current.scrollWheelZoom.disable();
+                    mapRef.current.touchZoom.disable();
+                } else {
+                    mapRef.current.dragging.enable();
+                    mapRef.current.scrollWheelZoom.enable();
+                    mapRef.current.touchZoom.enable();
+                }
+                setIsInteractive(!isInteractive);
+            };
+
+            return (
+                <section id="infra" className="bg-slate-900">
+                    <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
+                        <div className="h-[550px] rounded-3xl overflow-hidden border border-slate-700 shadow-2xl animate-enter order-2 lg:order-1 relative group">
+                            <div id="map-container"></div>
+                            <button 
+                                onClick={toggleInteraction}
+                                className={`map-control-btn ${isInteractive ? 'active' : ''}`}
+                            >
+                                {isInteractive ? '🖐️ 지도 고정하기' : '🖐️ 지도 조작하기'}
+                            </button>
+                        </div>
+                        <div className="space-y-8 animate-enter delay-100 order-1 lg:order-2">
+                            <div><h2 className="text-3xl font-bold text-white mb-4">생활권: 꽉 찬 인프라</h2><p className="text-slate-400">마트, 공원, GTX, 학교가 모두 반경 2km 내에 있습니다.</p></div>
+                            <div className="space-y-4">
+                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-blue-600/20 p-3 rounded-lg text-blue-400"><Icons.Train size={24}/></div><div><h3 className="text-white font-bold text-lg">GTX-B 부평역 (2030 예정)</h3><p className="text-slate-400 text-sm mt-1">서울역까지 20분대 주파. 수도권 서부 교통의 심장.</p></div></div>
+                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-green-600/20 p-3 rounded-lg text-green-400"><Icons.Trees size={24}/></div><div><h3 className="text-white font-bold text-lg">캠프마켓 & 호수공원</h3><p className="text-slate-400 text-sm mt-1">미군기지가 초대형 공원으로. 상동 호수공원과 더불어 완벽한 녹지 축.</p></div></div>
+                                <div className="glass-panel p-5 rounded-xl flex gap-4 hover-lift"><div className="bg-purple-600/20 p-3 rounded-lg text-purple-400"><Icons.Landmark size={24}/></div><div><h3 className="text-white font-bold text-lg">웅진플레이도시 & 인프라</h3><p className="text-slate-400 text-sm mt-1">워터파크, 아쿠아리움이 집 근처. 아이 키우기에 이보다 좋을 수 없습니다.</p></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 7: Daily Simulation ---
+        const DailySection = () => {
+             const wifeSchedule = [
+                { time: "06:00", event: "기상 (신도림 출근 준비)", icon: Icons.Clock },
+                { time: "06:30", event: "출근 출발", icon: Icons.Train },
+                { time: "07:05", event: "신도림 도착 (35분 소요)", icon: Icons.Briefcase },
+                { time: "16:40", event: "칼퇴근 출발", icon: Icons.Home },
+                { time: "17:15", event: "집 도착 & 아기 하원", icon: Icons.Baby },
+            ];
+            const husbandSchedule = [
+                { time: "07:30", event: "기상 & 아기 아침 먹이기", icon: Icons.Baby },
+                { time: "08:30", event: "어린이집 등원", icon: Icons.Baby },
+                { time: "08:40", event: "시청 출근 출발", icon: Icons.Train },
+                { time: "09:50", event: "시청 도착 (케이스퀘어)", icon: Icons.Briefcase },
+                { time: "18:50", event: "퇴근 출발", icon: Icons.Home },
+                { time: "20:00", event: "집 도착 & 육아 교대", icon: Icons.Heart },
+            ];
+
+            return (
+                <section id="daily" className="bg-slate-900">
+                    <div className="max-w-6xl mx-auto w-full">
+                        <div className="mb-12 text-center animate-enter">
+                            <h2 className="text-3xl font-bold text-white mb-4">맞벌이 부부의 하루 시뮬레이션</h2>
+                            <p className="text-slate-400">우리가 실제로 겪게 될 매일의 일상입니다.</p>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-8 animate-enter delay-100">
+                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-pink-400 hover-lift"><h3 className="text-xl font-bold text-pink-400 mb-6 flex items-center gap-2"><Icons.User /> 아내 (신도림)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{wifeSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-pink-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-pink-400"/> {s.event}</div></div>))}</div></div>
+                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-blue-400 hover-lift"><h3 className="text-xl font-bold text-blue-400 mb-6 flex items-center gap-2"><Icons.User /> 남편 (시청)</h3><div className="space-y-6 relative border-l border-slate-700 ml-4 pl-6">{husbandSchedule.map((s, i) => (<div key={i} className="relative"><div className="absolute -left-[31px] bg-blue-500 w-3 h-3 rounded-full border-2 border-slate-900"></div><span className="text-xs text-slate-500 block mb-1">{s.time}</span><div className="flex items-center gap-2 text-slate-200 font-medium"><s.icon size={16} className="text-blue-400"/> {s.event}</div></div>))}</div></div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 8: Finance ---
+        const FinanceSection = () => {
+            const [loan, setLoan] = useState(40000);
+            const [rateMarket, setRateMarket] = useState(4.5);
+            const calcPayment = (p, r) => {
+                const rate = r/100/12, n = 360;
+                return Math.floor((p * 10000 * rate * Math.pow(1+rate, n)) / (Math.pow(1+rate, n)-1));
+            }
+            const paySpecial = calcPayment(loan, 2.5);
+            const payMarket = calcPayment(loan, rateMarket);
+            const monthlySave = payMarket - paySpecial;
+            const totalSave = monthlySave * 12 * 5; 
+            const assetGrowth = 150000000;
+
+            return (
+                <section id="finance" className="bg-slate-900">
+                    <div className="max-w-6xl mx-auto w-full grid lg:grid-cols-2 gap-16 animate-enter">
+                        <div>
+                            <h2 className="text-3xl font-bold text-white mb-6">월 상환액 & 수익 분석</h2>
+                            <p className="text-slate-400 mb-8">대출금과 예상 금리를 입력해보세요.<br/>우리가 얼마나 이득을 보는지 바로 확인됩니다.</p>
+                            <div className="glass-panel p-6 rounded-2xl space-y-6">
+                                <div><div className="flex justify-between mb-2 text-sm text-slate-400"><span>대출 금액</span><span className="text-white font-bold">{loan/10000}억 원</span></div><input type="range" min="20000" max="50000" step="1000" value={loan} onChange={e=>setLoan(Number(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"/></div>
+                                <div><div className="flex justify-between mb-2 text-sm text-slate-400"><span>비교 대상 금리 (일반)</span><span className="text-white font-bold">{rateMarket}%</span></div><input type="range" min="3.5" max="6.0" step="0.1" value={rateMarket} onChange={e=>setRateMarket(Number(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500"/></div>
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-xl text-center hover-lift">
+                                <p className="text-slate-500 text-sm mb-1">매월 우리가 낼 돈 (2.5%)</p>
+                                <div className="text-4xl font-extrabold text-white mb-4">{new Intl.NumberFormat('ko-KR').format(paySpecial)}원</div>
+                                <div className="bg-blue-900/30 rounded-xl p-3 border border-blue-500/30"><p className="text-blue-400 text-sm font-bold">월 {new Intl.NumberFormat('ko-KR').format(monthlySave)}원 세이브!</p></div>
+                            </div>
+                            <div className="glass-panel p-6 rounded-2xl hover-lift">
+                                <h4 className="text-white font-bold mb-4 border-b border-slate-700 pb-2">💰 5년 후 예상 총 수익</h4>
+                                <div className="flex justify-between mb-2 text-sm"><span className="text-slate-400">이자 절감액 (5년)</span><span className="text-blue-400">+{new Intl.NumberFormat('ko-KR').format(totalSave/10000)}만원</span></div>
+                                <div className="flex justify-between mb-2 text-sm"><span className="text-slate-400">자산 상승분 (예상)</span><span className="text-blue-400">+{new Intl.NumberFormat('ko-KR').format(assetGrowth/10000)}만원</span></div>
+                                <div className="flex justify-between pt-3 border-t border-slate-700 font-bold text-lg"><span className="text-white">Total ROI</span><span className="text-green-400">+{new Intl.NumberFormat('ko-KR').format((totalSave+assetGrowth)/10000)}만원</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 9: Roadmap & Exit Strategy ---
+        const RoadmapSection = () => {
+            return (
+                <section id="roadmap" className="bg-slate-900">
+                    <div className="max-w-4xl mx-auto w-full animate-enter">
+                        <div className="mb-16 text-center">
+                            <h2 className="text-4xl font-bold text-white mb-4">Golden Roadmap</h2>
+                            <p className="text-slate-400">매수부터 서울 진입(Exit)까지, 계획된 시나리오입니다.</p>
+                        </div>
+                        <div className="relative border-l-2 border-slate-700 ml-6 space-y-12">
+                            <div className="relative pl-8">
+                                <div className="absolute -left-[9px] w-4 h-4 rounded-full bg-slate-500 ring-4 ring-slate-950"></div>
+                                <h3 className="text-lg font-bold text-slate-400 mb-1">현재 (Now)</h3>
+                                <p className="text-slate-500 text-sm">전세 만기 및 신생아 특례대출(2.5%) 자격 확보.</p>
+                            </div>
+                            <div className="relative pl-8">
+                                <div className="absolute -left-[11px] w-5 h-5 rounded-full bg-blue-500 ring-4 ring-slate-950 shadow-lg shadow-blue-500/50"></div>
+                                <h3 className="text-xl font-bold text-white mb-1">2026.03 (이사)</h3>
+                                <p className="text-blue-300 text-sm font-bold">부평 해모로 입주 (로얄동 선점). 실거주 시작.</p>
+                            </div>
+                            <div className="relative pl-8">
+                                <div className="absolute -left-[9px] w-4 h-4 rounded-full bg-slate-600 ring-4 ring-slate-950"></div>
+                                <h3 className="text-lg font-bold text-slate-300 mb-1">2028 ~ 2029 (보유)</h3>
+                                <p className="text-slate-400 text-sm">GTX-B 공사 진행 및 부평 인프라 개선 가시화. 자산 가치 상승 구간.</p>
+                            </div>
+                            <div className="relative pl-8">
+                                <div className="absolute -left-[11px] w-5 h-5 rounded-full bg-purple-500 ring-4 ring-slate-950 shadow-lg shadow-purple-500/50"></div>
+                                <h3 className="text-xl font-bold text-white mb-1">2030 (GTX 완공 & Exit)</h3>
+                                <p className="text-purple-300 text-sm font-bold">
+                                    예상 매도가 8억 (시세차익 2.2억 실현).<br/>
+                                    기존 자산 1.9억 + 차익 2.2억 + 저축액 = <span className="text-white border-b border-purple-500">서울 상급지 이동</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Section 10: Action Plan ---
+        const ActionSection = () => {
+             const [tab, setTab] = useState('check');
+             return (
+                <section id="action" className="bg-gradient-to-b from-slate-900 to-slate-950">
+                    <div className="max-w-4xl mx-auto w-full px-6 text-center animate-enter">
+                        <h2 className="text-3xl font-bold text-white mb-8">Action Plan</h2>
+                        <div className="bg-slate-800 border border-slate-700 rounded-3xl p-8 text-left mb-16 shadow-2xl">
+                             <div className="flex gap-4 mb-6 border-b border-slate-700 pb-4">
+                                <button onClick={()=>setTab('check')} className={`text-sm font-bold px-3 py-1 rounded transition-colors ${tab==='check' ? 'text-white bg-blue-600' : 'text-slate-500 hover:text-slate-300'}`}>✅ 체크리스트</button>
+                                <button onClick={()=>setTab('qna')} className={`text-sm font-bold px-3 py-1 rounded transition-colors ${tab==='qna' ? 'text-white bg-blue-600' : 'text-slate-500 hover:text-slate-300'}`}>🗣️ 중개사 질문</button>
+                                <button onClick={()=>setTab('dong')} className={`text-sm font-bold px-3 py-1 rounded transition-colors ${tab==='dong' ? 'text-white bg-blue-600' : 'text-slate-500 hover:text-slate-300'}`}>🏢 추천 동</button>
+                            </div>
+                            {tab === 'check' && (
+                                <ul className="space-y-3">{["오후 2시 거실 채광 (앞동 간섭 확인)", "창문 닫고 철길 소음 체크 (가장 조용한 시간)", "지하주차장 진입로 혼잡도 (저녁 방문)", "베란다 탄성코트 곰팡이 흔적", "엘리베이터 속도 및 대기시간"].map((t,i)=><li key={i} className="flex gap-3 text-slate-300 items-center"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>{t}</li>)}</ul>
+                            )}
+                            {tab === 'qna' && (
+                                <div className="space-y-4"><div className="bg-slate-700/50 p-3 rounded-lg"><strong className="text-white block mb-1">Q. 매도 사유가 뭐예요?</strong><span className="text-slate-400 text-sm">갈아타기인지, 급전인지 파악하여 협상 우위 점하기</span></div><div className="bg-slate-700/50 p-3 rounded-lg"><strong className="text-white block mb-1">Q. 층간소음/흡연 민원 많나요?</strong><span className="text-slate-400 text-sm">관리실에 접수된 민원 이력 확인 요청</span></div><div className="bg-slate-700/50 p-3 rounded-lg"><strong className="text-white block mb-1">Q. 잔금 빨리 치르면 얼마 깎아줘요?</strong><span className="text-slate-400 text-sm">구체적인 날짜 제시하며 네고 시도</span></div></div>
+                            )}
+                            {tab === 'dong' && (
+                                <div className="space-y-4"><div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg"><strong className="text-yellow-400 block mb-1">🥇 1순위: 108~110동 (중층↑)</strong><span className="text-xs text-slate-400">단지 중앙이라 소음 없고 조경 뷰 확보됨. 환금성 최고.</span></div><div className="p-3 bg-slate-700/50 border border-slate-600 rounded-lg"><strong className="text-slate-300 block mb-1">🥈 2순위: 111~112동</strong><span className="text-xs text-slate-400">학교 가깝고 조용함. 가성비 매물 노리기 좋음.</span></div></div>
+                            )}
+                        </div>
+                        <h2 className="text-5xl font-bold text-white mb-8">Ready?</h2>
+                        <div className="flex flex-col items-center gap-6">
+                            <button className="px-12 py-5 bg-white text-slate-900 rounded-full font-bold text-xl hover:bg-blue-50 transition-all shadow-xl flex items-center justify-center gap-3 animate-pulse-glow hover:scale-105 cursor-pointer">임장 데이트 일정 잡기 <Icons.Calendar /></button>
+                            <a href="https://fin.land.naver.com/complexes/132386?tab=article&transactionPyeongTypeNumber=5&transactionTradeType=A1&articleSortingType=PRICE_ASC&articlePyeongTypeNumbers=5%2C6%2C7%2C8%2C9%2C10%2C11%2C12&articleTradeTypes=A1&articleDongNumbers=1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12%2C13" target="_blank" className="text-slate-400 hover:text-white border-b border-slate-600 hover:border-white transition-colors pb-1 flex items-center gap-2">네이버 부동산에서 실매물 확인하기 <Icons.ArrowRight size={14}/></a>
+                        </div>
+                    </div>
+                </section>
+             );
+        }
+
+        // --- App ---
+        const App = () => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-blue-500 selection:text-white">
+                    <Header />
+                    <Hero />
+                    <PremiseSection />
+                    <CandidateSection />
+                    <AnalysisSection />
+                    <StrategicSection />
+                    <RiskSection />
+                    <InfraSection />
+                    <DailySection />
+                    <FinanceSection />
+                    <RoadmapSection />
+                    <ActionSection />
+                    <footer className="bg-slate-950 text-slate-600 py-12 text-center text-xs border-t border-slate-900"><div className="max-w-6xl mx-auto px-6"><p className="mb-2 font-bold text-slate-500">PROJECT D.H | 2025 INVESTMENT REPORT</p><p>본 보고서는 시뮬레이션 결과이며, 최종 투자의 책임은 본인에게 있습니다.</p></div></footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
