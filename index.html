@@ -238,6 +238,7 @@
             Wine: () => <i data-lucide="wine"></i>,
             CheckSquare: () => <i data-lucide="check-square"></i>,
             MessageCircle: () => <i data-lucide="message-circle"></i>,
+            ThumbsUp: () => <i data-lucide="thumbs-up"></i>,
         };
 
         // --- Scroll To Top Component ---
@@ -267,7 +268,7 @@
                 <div className={`fixed bottom-8 right-8 z-50 transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <button 
                         onClick={scrollToTop} 
-                        className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-colors animate-bounce"
+                        className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-colors animate-pulse-glow"
                         aria-label="맨 위로"
                     >
                         <Icons.ArrowUp size={24} />
@@ -304,7 +305,7 @@
             const navs = [
                 { name: 'Why Now', href: '#premise', id: 'premise' },
                 { name: 'Analysis', href: '#analysis', id: 'analysis' },
-                { name: 'Strategy', href: '#strategy', id: 'strategy' },
+                { name: 'Strategic Choice', href: '#strategy', id: 'strategy' },
                 { name: 'Fact Check', href: '#factcheck', id: 'factcheck' },
                 { name: 'Life Map', href: '#infra', id: 'infra' },
                 { name: 'Finance', href: '#finance', id: 'finance' },
@@ -351,7 +352,7 @@
                         <span className="text-bloom">Maximum Value</span>
                     </h1>
                     <p className="text-xl text-slate-300 mb-2 max-w-2xl mx-auto font-light leading-relaxed">
-                        완벽한 집은 없습니다. 하지만 <strong className="text-white underline-swipe">가장 후회 없는 선택</strong>은 있습니다.
+                        완벽한 집은 없습니다. 하지만 <strong className="text-white underline-swipe">현 조건에서 가장 합리적인 선택</strong>은 있습니다.
                     </p>
                     <p className="text-slate-400 text-sm mt-4 mb-12">“지금의 편안함과, 미래의 선택권을 동시에 지키는 집”</p>
                     
@@ -434,7 +435,7 @@
                         <div className="flex justify-between items-end mb-12 animate-enter">
                             <div>
                                 <h2 className="text-4xl font-bold text-white mb-2">종합 평가: <span className="text-blue-500 text-bloom">842점 (1위)</span></h2>
-                                <p className="text-slate-400">"왜 해모로여야 하는가?" 숫자로 증명된 압도적 밸런스입니다.</p>
+                                <p className="text-slate-400">"왜 해모로여야 하는가?" 숫자로 증명된 안정적인 밸런스입니다.</p>
                             </div>
                         </div>
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -450,7 +451,7 @@
                             <div className="mt-8 glass-panel p-8 rounded-3xl animate-enter border-t-4 border-blue-500">
                                 <h4 className="text-white font-bold mb-6 text-xl text-center">🏆 3파전 끝장 비교 분석표</h4>
                                 <div className="overflow-x-auto"><table className="w-full text-left text-sm border-collapse"><thead><tr className="border-b border-slate-700 text-slate-400"><th className="p-4">평가 항목</th><th className="p-4">범박 일루미</th><th className="p-4 text-blue-400 font-bold bg-blue-500/10">부평 해모로 (Winner)</th><th className="p-4">송내 자이</th></tr></thead><tbody className="text-slate-300 divide-y divide-slate-800"><tr><td className="p-4 font-bold">1. 서울 접근성</td><td className="p-4 text-red-400">하 (지하철X)</td><td className="p-4 text-blue-300 bg-blue-500/10">중상 (1호선+버스)</td><td className="p-4 text-green-400">최상 (특급역세권)</td></tr><tr><td className="p-4 font-bold">2. 단지 규모/쾌적성</td><td className="p-4 text-green-400">최상 (3,700세대)</td><td className="p-4 text-blue-300 bg-blue-500/10">상 (1,500세대 평지)</td><td className="p-4">중 (1,000세대)</td></tr><tr><td className="p-4 font-bold">3. 주변 유해시설</td><td className="p-4 text-green-400">없음 (청정)</td><td className="p-4 text-blue-300 bg-blue-500/10">없음 (주거지역)</td><td className="p-4 text-red-400">많음 (유흥가/모텔)</td></tr><tr><td className="p-4 font-bold">4. 초등학교 통학</td><td className="p-4">도보 5분</td><td className="p-4 bg-blue-500/10">도보 5분 (부개서초)</td><td className="p-4">도보 7분</td></tr><tr><td className="p-4 font-bold">5. 가격 메리트</td><td className="p-4">6억 초반</td><td className="p-4 text-blue-300 bg-blue-500/10">5억 후반 (가장 저렴)</td><td className="p-4 text-red-400">6억 중반 (비쌈)</td></tr><tr><td className="p-4 font-bold">6. 환금성 (거래량)</td><td className="p-4">보통</td><td className="p-4 text-blue-300 bg-blue-500/10">우수 (투자+실거주)</td><td className="p-4">우수</td></tr></tbody></table></div>
-                                <div className="mt-4 text-center text-blue-300 font-bold bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">💡 결론: 해모로는 '치명적 단점'이 없는 유일한 단지입니다. 송내의 '환경 리스크', 범박의 '교통 리스크'를 모두 피한 최적의 해답입니다.</div>
+                                <div className="mt-4 text-center text-blue-300 font-bold bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">💡 결론: 해모로는 '치명적 단점'이 없는 가장 균형 잡힌 단지입니다. 송내의 '환경 리스크', 범박의 '교통 리스크'를 모두 피한 최적의 해답입니다.</div>
                             </div>
                         )}
                     </div>
@@ -458,7 +459,7 @@
             );
         };
 
-        // --- Section 4: Strategic Choice (New High-Impact Text) ---
+        // --- Section 4: Strategic Choice (Updated with Respect) ---
         const StrategicSection = () => {
             return (
                 <section id="strategy" className="bg-slate-900">
@@ -469,55 +470,47 @@
                                 범박은 "지금 살기 좋은 집"이고,<br/>
                                 해모로는 <span className="text-bloom text-blue-400">"다음 수를 남기는 집"</span>입니다.
                             </h2>
-                            <p className="text-xl text-slate-400">이 차이가 인생 전체의 자산 격차를 만듭니다.</p>
+                            <p className="text-xl text-slate-400">선택의 기준을 어디에 두느냐의 차이입니다.</p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8">
+                        <div className="grid md:grid-cols-2 gap-8 mb-12">
                             {/* Why Bumbox */}
-                            <div className="glass-panel p-8 rounded-3xl border-t-4 border-slate-600 opacity-80 hover:opacity-100 transition-opacity">
-                                <h3 className="text-xl font-bold text-slate-300 mb-6">와이프 분의 말씀이 맞습니다.</h3>
+                            <div className="glass-panel p-8 rounded-3xl border-t-4 border-slate-600 opacity-90 hover:opacity-100 transition-opacity">
+                                <h3 className="text-xl font-bold text-slate-300 mb-6">범박이 정답인 경우도 있습니다.</h3>
                                 <ul className="space-y-4 text-slate-400 text-sm leading-relaxed">
-                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>범박 일루미는 <strong>육아 관점 완성형</strong>입니다. (스타필드, 초품아, 4천세대)</span></li>
-                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>"지금 당장 살 집"만 놓고 보면 범박이 더 쾌적할 수 있습니다.</span></li>
+                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>만약 우리가 <strong>서울 진입을 목표로 하지 않고</strong></span></li>
+                                    <li className="flex gap-3"><Icons.CheckCircle size={18} className="text-slate-500 shrink-0"/> <span>아이 초등 졸업 때까지 <strong>한 곳에서 정주할 계획</strong>이라면</span></li>
+                                    <li className="flex gap-3"><Icons.ThumbsUp size={18} className="text-slate-500 shrink-0"/> <span>범박 일루미는 더할 나위 없이 훌륭한 선택지입니다.</span></li>
                                 </ul>
-                                <div className="mt-6 p-4 bg-slate-800 rounded-xl text-xs text-slate-500">
-                                    📌 하지만 범박은 '살고 싶은 집'이지, '갈아타기 위해 사는 집'은 아닙니다. 상승장이 와도 외부 이벤트 없이는 반응이 느립니다.
-                                </div>
                             </div>
 
                             {/* Why Haemoro */}
                             <div className="glass-panel p-8 rounded-3xl border-t-4 border-blue-500 relative overflow-hidden shadow-2xl">
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Icons.TrendingUp size={100} className="text-blue-500"/></div>
-                                <h3 className="text-xl font-bold text-blue-400 mb-6">그럼에도 해모로인 이유 (3가지)</h3>
+                                <h3 className="text-xl font-bold text-blue-400 mb-6">하지만, 서울을 포기하지 않았다면?</h3>
                                 <ul className="space-y-5 text-slate-200 text-sm leading-relaxed">
                                     <li className="flex gap-3">
                                         <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Clock size={16}/></div>
                                         <div>
                                             <strong className="block mb-1 underline-swipe">시간 자산의 확보</strong>
-                                            <span className="text-slate-400">범박의 버스 출근 vs 해모로의 1호선 도보. 5년간 1,000시간의 차이는 '아이와 보내는 시간'과 '부부의 여유'로 직결됩니다.</span>
+                                            <span className="text-slate-400">5년간 1,000시간 이상의 출퇴근 시간 절약. 이는 '부부의 삶'으로 직결됩니다.</span>
                                         </div>
                                     </li>
                                     <li className="flex gap-3">
                                         <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.ArrowRight size={16}/></div>
                                         <div>
-                                            <strong className="block mb-1 underline-swipe">이동 가능한 자산</strong>
-                                            <span className="text-slate-400">서울로 가려면 '살기 좋은 집'보다 '팔기 쉬운 집'이 필요합니다. 1호선 라인은 거래량이 마르지 않습니다.</span>
-                                        </div>
-                                    </li>
-                                    <li className="flex gap-3">
-                                        <div className="bg-blue-500/20 p-1.5 rounded text-blue-400 h-fit"><Icons.Maximize size={16}/></div>
-                                        <div>
-                                            <strong className="block mb-1 underline-swipe">상승장의 갭 메우기</strong>
-                                            <span className="text-slate-400">상승장은 같이 오르지 않습니다. 서울 → 1호선/GTX → 외곽 순으로 오릅니다. 해모로는 그 흐름의 앞단에 있습니다.</span>
+                                            <strong className="block mb-1 underline-swipe">서울 진입의 교두보</strong>
+                                            <span className="text-slate-400">서울이 오르면 경기, 인천 순으로 오릅니다. 1호선 라인은 그 흐름의 가장 앞단에 있습니다.</span>
                                         </div>
                                     </li>
                                 </ul>
                             </div>
                         </div>
 
-                        <div className="mt-12 text-center p-6 glass-panel rounded-2xl">
+                        <div className="mt-8 text-center p-6 glass-panel rounded-2xl">
                             <p className="text-lg font-serif text-slate-200 italic">
-                                "범박은 <span className="text-slate-400">여기서 행복하게 늙어가는 집</span>이고,<br className="md:hidden"/> 해모로는 <span className="text-blue-400 font-bold">다음 선택(서울)을 가능하게 하는 집</span>입니다."
+                                "해모로 때문에 서울을 못 가는 게 아니라, 서울이 원래 먼저 멀어집니다.<br/>
+                                중요한 건 그 다음 순서인 <span className="text-blue-400 font-bold">'수도권 상급지 흐름'에 올라타는 것</span>입니다."
                             </p>
                         </div>
                     </div>
@@ -604,30 +597,30 @@
             );
         };
 
-        // --- Section 5: Risk (Honest Review) ---
+        // --- Section 5: Risk (Things to Endure - New Title) ---
         const RiskSection = () => {
             return (
-                <section id="risk" className="bg-slate-900">
+                <section id="risk" className="bg-slate-950">
                     <div className="max-w-6xl mx-auto w-full px-6 animate-enter">
                         <div className="mb-12 text-center">
-                            <h2 className="text-3xl font-bold text-white mb-4">해모로의 리스크 (Honest Review)</h2>
-                            <p className="text-slate-400">장점만 있는 집은 없습니다. 리스크를 알고 들어가는 것이 진짜 투자입니다.</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">❝ 해모로를 선택하면 감수해야 하는 것들 ❞</h2>
+                            <p className="text-slate-400 text-lg">장점만 있는 집은 없습니다. 이 단점들을 알고도 감수할 가치가 있는지 판단해야 합니다.</p>
                         </div>
-                        <div className="grid md:grid-cols-3 gap-6">
-                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
-                                <h4 className="font-bold text-white text-lg mb-2">1. GTX-B 지연 가능성</h4>
-                                <p className="text-base text-slate-300 mb-3">개통이 계획보다 늦어질 수 있습니다.</p>
-                                <p className="text-sm text-yellow-500 font-bold bg-yellow-500/10 p-3 rounded leading-relaxed">🛡️ 그래도 1호선 본선 역세권의 가치는 변하지 않습니다. GTX는 '+@'일 뿐 전제조건이 아닙니다.</p>
+                        <div className="grid md:grid-cols-3 gap-8">
+                            <div className="glass-panel p-8 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white text-xl mb-3">1. 노후된 주변 이미지</h4>
+                                <p className="text-base text-slate-300 mb-4 leading-relaxed">주변에 구축 빌라가 있어 범박 같은 '신도시 느낌'은 아닙니다.</p>
+                                <p className="text-sm text-yellow-400 font-bold bg-yellow-500/10 p-4 rounded leading-relaxed">🛡️ 반박: 그래서 가격이 쌉니다. 주변이 천지개벽할 때(재개발/GTX) 시세 차익은 완성된 곳보다 훨씬 큽니다.</p>
                             </div>
-                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
-                                <h4 className="font-bold text-white text-lg mb-2">2. 학군이 대박은 아님</h4>
-                                <p className="text-base text-slate-300 mb-3">목동, 중계동급 학군은 아닙니다.</p>
-                                <p className="text-sm text-yellow-500 font-bold bg-yellow-500/10 p-3 rounded leading-relaxed">🛡️ 초품아에 중학교도 인접해 '안정적'입니다. 아이가 클 때까지 거주하기에 부족함이 없습니다.</p>
+                            <div className="glass-panel p-8 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white text-xl mb-3">2. 상권 세련도 부족</h4>
+                                <p className="text-base text-slate-300 mb-4 leading-relaxed">스타필드 같은 몰세권이 아닙니다. 재래시장/마트 위주입니다.</p>
+                                <p className="text-sm text-yellow-400 font-bold bg-yellow-500/10 p-4 rounded leading-relaxed">🛡️ 반박: 실거주 물가는 더 저렴하며, 차로 10분만 가면 웅진플레이도시, 현대백화점 등 부천 인프라를 공유합니다.</p>
                             </div>
-                            <div className="glass-panel p-6 rounded-2xl border-l-4 border-yellow-500">
-                                <h4 className="font-bold text-white text-lg mb-2">3. 초반 급등 제한</h4>
-                                <p className="text-base text-slate-300 mb-3">드라마틱한 폭등은 어렵습니다.</p>
-                                <p className="text-sm text-yellow-500 font-bold bg-yellow-500/10 p-3 rounded leading-relaxed">🛡️ 대신 하방 경직성이 강합니다. 잃지 않는 투자가 우선인 우리 가족에게 적합합니다.</p>
+                            <div className="glass-panel p-8 rounded-2xl border-l-4 border-yellow-500">
+                                <h4 className="font-bold text-white text-xl mb-3">3. GTX는 아직 '미래'</h4>
+                                <p className="text-base text-slate-300 mb-4 leading-relaxed">당장 탈 수 없습니다. 공사 기간 동안 불편할 수 있습니다.</p>
+                                <p className="text-sm text-yellow-400 font-bold bg-yellow-500/10 p-4 rounded leading-relaxed">🛡️ 반박: 지금은 '불편함'을 싸게 사고, 나중에 '편리함'이 되었을 때 비싸게 파는 것이 투자의 정석입니다.</p>
                             </div>
                         </div>
                     </div>
@@ -650,6 +643,7 @@
                 { name: '한아름 마트', lat: 37.492868, lng: 126.732160, type: 'mart' },
                 { name: '신용할인마트', lat: 37.493719, lng: 126.739037, type: 'mart' },
                 { name: '롯데마트 부평역점', lat: 37.489638, lng: 126.723432, type: 'mart' },
+                { name: '부평 테마의거리 (유흥가)', lat: 37.492300, lng: 126.723000, type: 'warning' }, // New: Entertainment District
                 { name: '캠프마켓 (공원화 예정)', lat: 37.493930, lng: 126.713880, type: 'park' },
                 { name: '가톨릭대 인천성모병원', lat: 37.484700, lng: 126.722000, type: 'hospital' },
                 { name: '상동 호수공원', lat: 37.505700, lng: 126.742000, type: 'park' },
@@ -670,6 +664,7 @@
                 fun: { color: '#8b5cf6', label: '여가', icon: Icons.Heart },
                 book: { color: '#0ea5e9', label: '도서관', icon: Icons.Book },
                 subway: { color: '#6366f1', label: '지하철', icon: Icons.Train },
+                warning: { color: '#ef4444', label: '유흥가(격리)', icon: Icons.Wine },
              };
 
              const getDistance = (lat1, lon1, lat2, lon2) => {
