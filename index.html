@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project D.H: 힐스테이트 부평 전략 리포트 (Final Integrated)</title>
+    <title>2026 힐스테이트 부평: 자산 성장 로드맵 (Final Edition)</title>
     
-    <!-- Libraries -->
+    <!-- Core Libraries -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Leaflet for Map -->
+    <!-- Map: Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -23,9 +23,9 @@
     <style>
         :root {
             --bg-deep: #020617;
+            --card-glass: rgba(30, 41, 59, 0.4);
             --brand-blue: #3b82f6;
             --brand-cyan: #22d3ee;
-            --card-glass: rgba(30, 41, 59, 0.5);
         }
 
         body {
@@ -37,13 +37,13 @@
             scroll-behavior: smooth;
         }
 
-        /* Bento Card Styling */
+        /* Premium Effects */
         .bento-card {
             background: var(--card-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 2.5rem;
+            border-radius: 2rem;
             transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
@@ -51,74 +51,57 @@
         .bento-card:hover {
             transform: translateY(-8px) scale(1.01);
             border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
         }
 
-        /* Text Bloom Animation */
         .text-bloom {
             animation: bloom 3s infinite ease-in-out;
         }
         @keyframes bloom {
             0%, 100% { text-shadow: 0 0 15px rgba(59, 130, 246, 0.4); color: #fff; }
-            50% { text-shadow: 0 0 30px rgba(34, 211, 238, 0.7); color: #cffafe; }
+            50% { text-shadow: 0 0 30px rgba(34, 211, 238, 0.6); color: #cffafe; }
         }
 
-        /* Glass Navigation */
-        nav.glass-nav {
-            background: rgba(2, 6, 23, 0.8);
-            backdrop-filter: blur(20px);
+        .glass-nav {
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Map styling */
+        #infra-map { height: 650px; width: 100%; border-radius: 2.5rem; z-index: 1; border: 1px solid rgba(255,255,255,0.1); }
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-deep); }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--brand-blue); }
 
-        /* Map styling */
-        #infra-map { height: 600px; width: 100%; border-radius: 2rem; z-index: 10; border: 1px solid rgba(255,255,255,0.1); }
-
-        /* Comparison Table Focus */
-        .table-focus { background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--brand-blue); }
-
-        /* Timeline Connector */
+        /* Timeline */
         .timeline-line {
-            position: absolute;
-            left: 20px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(to bottom, transparent, #1e293b, transparent);
+            position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0;
+            width: 2px; background: linear-gradient(to bottom, transparent, #1e293b, #3b82f6, #1e293b, transparent);
+            z-index: 0;
         }
 
-        /* Animations */
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-reveal { animation: slideUp 0.8s forwards; }
-
-        /* Tooltip styles */
-        .recharts-default-tooltip {
-            background-color: #0f172a !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            border-radius: 12px !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { animation: slideIn 0.8s forwards; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+        const { useState, useEffect, useRef } = React;
         const { 
             ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, 
-            Legend, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Line, BarChart, Bar, Cell 
+            Legend, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Line, BarChart, Bar 
         } = Recharts;
 
-        // --- GOOGLE DRIVE IMAGE INSERTION HELPER ---
-        const GET_IMG = (id, fallback) => id ? `https://drive.google.com/uc?export=view&id=${id}` : fallback;
+        // --- Google Drive Image Insertion ---
+        const IMG_URL = (id) => id ? `https://drive.google.com/uc?export=view&id=${id}` : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80';
 
-        // --- Icon Component ---
+        // --- Icon Helper ---
         const Icon = ({ name, size = 20, className = "" }) => {
             const LucideIcon = lucide.icons[name];
             return LucideIcon ? <LucideIcon size={size} className={className} /> : null;
@@ -128,343 +111,345 @@
             const [isScrolled, setIsScrolled] = useState(false);
             const [activeActionTab, setActiveActionTab] = useState('check');
             const [showDetailMatrix, setShowDetailMatrix] = useState(false);
-            const mapInstance = useRef(null);
+            const mapRef = useRef(null);
 
             useEffect(() => {
                 const handleScroll = () => setIsScrolled(window.scrollY > 50);
                 window.addEventListener('scroll', handleScroll);
                 
-                // --- Initialize Leaflet Map ---
-                if (!mapInstance.current) {
-                    const hillstatePos = [37.4920, 126.7353];
-                    const map = L.map('infra-map', { scrollWheelZoom: false }).setView(hillstatePos, 15);
-                    
+                // Initialize Map logic
+                if (!mapRef.current) {
+                    const hillstateCoord = [37.4920, 126.7353];
+                    const map = L.map('infra-map', { scrollWheelZoom: false }).setView(hillstateCoord, 15);
                     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                         attribution: '&copy; CartoDB'
                     }).addTo(map);
 
-                    // Markers
-                    const homeIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style="background-color: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(59,130,246,0.6);"></div>`,
-                        iconSize: [24, 24], iconAnchor: [12, 12]
+                    const mainIcon = L.divIcon({
+                        className: 'custom-icon',
+                        html: `<div style="background-color: #3b82f6; width: 28px; height: 28px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 20px rgba(59,130,246,0.8);"></div>`,
+                        iconSize: [28, 28], iconAnchor: [14, 14]
                     });
 
-                    L.marker(hillstatePos, { icon: homeIcon }).addTo(map).bindPopup("<b style='color:#1e3a8a'>힐스테이트 부평 (0m 초품아)</b><br/>우리 가족의 징검다리 전략지").openPopup();
+                    L.marker(hillstateCoord, { icon: mainIcon }).addTo(map).bindPopup("<b>힐스테이트 부평 (59A)</b><br/>우리의 징검다리 보금자리").openPopup();
                     
-                    // School
-                    L.circleMarker([37.4900, 126.7339], { radius: 8, color: '#16a34a', weight: 2, fillOpacity: 0.8 }).addTo(map).bindPopup("부개서초등학교 (도보 1분)");
-                    // Station
+                    // Nearby markers
+                    L.circleMarker([37.4900, 126.7339], { radius: 8, color: '#16a34a', weight: 2, fillOpacity: 0.8 }).addTo(map).bindPopup("부개서초등학교 (0m)");
                     L.circleMarker([37.4885, 126.7410], { radius: 8, color: '#6366f1', weight: 2, fillOpacity: 0.8 }).addTo(map).bindPopup("백운역 (1호선)");
-                    // Warning Zone (Simplified)
-                    L.circle([37.4923, 126.7230], { radius: 400, color: '#ef4444', weight: 1, fillOpacity: 0.1 }).addTo(map).bindPopup("부평역 유흥가 (생활권 완전 분리 구역)");
+                    L.circle([37.4923, 126.7230], { radius: 450, color: '#ef4444', weight: 1, fillOpacity: 0.1 }).addTo(map).bindPopup("부평역 유흥가 (심리적/물리적 격리 구역)");
 
-                    mapInstance.current = map;
+                    mapRef.current = map;
                 }
 
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
-            // --- Data Sets ---
+            // --- Comprehensive Data ---
             const radarData = [
-                { subject: '투자가치', A: 92, B: 75, fullMark: 100 },
-                { subject: '출퇴근', A: 75, B: 90, fullMark: 100 },
-                { subject: '육아환경', A: 100, B: 70, fullMark: 100 },
-                { subject: '단지상품', A: 95, B: 80, fullMark: 100 },
-                { subject: '가격매력', A: 85, B: 65, fullMark: 100 },
-                { subject: '환금성', A: 90, B: 85, fullMark: 100 },
+                { subject: '투자가치', A: 95, B: 75 },
+                { subject: '출퇴근', A: 78, B: 90 },
+                { subject: '육아환경', A: 100, B: 70 },
+                { subject: '단지상품', A: 92, B: 80 },
+                { subject: '가격매력', A: 88, B: 65 },
+                { subject: '환금성', A: 90, B: 85 },
             ];
 
-            const financeData = [
+            const financeFlow = [
                 { year: '1년차(거치)', total: 95, principal: 0, interest: 85, insurance: 10 },
-                { year: '5년차', total: 130, principal: 40, interest: 80, insurance: 10 },
-                { year: '10년차', total: 175, principal: 90, interest: 75, insurance: 10 },
-                { year: '20년차', total: 260, principal: 190, interest: 60, insurance: 10 },
-                { year: '30년차', total: 350, principal: 300, interest: 40, insurance: 10 },
+                { year: '5년차', total: 135, principal: 45, interest: 80, insurance: 10 },
+                { year: '10년차', total: 180, principal: 100, interest: 70, insurance: 10 },
+                { year: '20년차', total: 270, principal: 210, interest: 50, insurance: 10 },
+                { year: '30년차', total: 360, principal: 320, interest: 30, insurance: 10 },
             ];
 
-            const scheduleWife = [
-                { time: "06:00", event: "기상 및 신도림 출근 준비", desc: "고요한 대단지의 아침" },
-                { time: "06:40", event: "백운역 이동 (도보 7분)", desc: "정돈된 평지 이동" },
-                { time: "07:15", event: "신도림역 도착", desc: "1호선 급행 활용 35분" },
-                { time: "16:40", event: "퇴근 출발 및 아이 하원", desc: "여유로운 오후 확보" },
-            ];
-
-            const scheduleHusband = [
-                { time: "07:30", event: "아이 아침 식사 및 등원 준비", desc: "아빠의 육아 시간" },
-                { time: "08:30", event: "부개서초(병설) 등원 완료", desc: "단지 내 0m 이동" },
-                { time: "08:45", event: "시청역 출근 출발", desc: "1호선 시청 직결" },
-                { time: "20:00", event: "귀가 및 육아 교대", desc: "가족과 함께하는 저녁" },
+            const strategySteps = [
+                { year: "2025 현재", title: "최선(Best-fit)의 매수", desc: "신생아 특례 2.4% 고정금리 확보 및 저평가 매물 선점." },
+                { year: "2026-2029", title: "주거 안정 및 가치 상승", desc: "0m 초품아 단지에서 아이의 유년기를 안전하게 보육하며 GTX-B 공사 호재를 향유." },
+                { year: "2028-", title: "주변 환경 천지개벽", desc: "캠프마켓 공원화 단계적 개방 및 굴포천 복원 완료로 부평구 대장주 지위 확립." },
+                { year: "2030 EXIT", title: "서울 상급지 점프", desc: "비과세 요건 충족 및 GTX 개통 시점에 맞춰 마포·영등포 진입 실현." },
             ];
 
             return (
-                <div className="min-h-screen pb-20 selection:bg-blue-500/30">
+                <div className="min-h-screen">
                     
-                    {/* Navigation */}
-                    <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${isScrolled ? 'glass-nav py-4 shadow-2xl' : 'bg-transparent py-7'}`}>
-                        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+                    {/* Navigation Bar */}
+                    <nav className={`fixed top-0 w-full z-[1000] transition-all duration-500 ${isScrolled ? 'glass-nav py-4 shadow-2xl' : 'bg-transparent py-7'}`}>
+                        <div className="max-w-7xl mx-auto px-8 flex justify-between items-center">
                             <div className="flex items-center gap-3 group cursor-pointer">
-                                <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40 group-hover:rotate-12 transition-transform">
-                                    <Icon name="ShieldCheck" className="text-white" size={24} />
+                                <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                                    <Icon name="ShieldCheck" className="text-white" size={28} />
                                 </div>
-                                <span className="text-2xl font-black tracking-tighter">PROJECT <span className="text-blue-400">D.H</span></span>
+                                <div className="flex flex-col">
+                                    <span className="text-2xl font-black tracking-tighter uppercase leading-none">HILLSTATE</span>
+                                    <span className="text-[10px] font-bold text-blue-400 tracking-[0.4em] uppercase">Bupyeong Strategy</span>
+                                </div>
                             </div>
-                            <div className="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-400">
+                            <div className="hidden lg:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
                                 {['macro', 'matrix', 'infra', 'finance', 'roadmap', 'action'].map(link => (
-                                    <a key={link} href={`#${link}`} className="hover:text-white transition-colors">{link}</a>
+                                    <a key={link} href={`#${link}`} className="hover:text-blue-400 transition-colors">{link}</a>
                                 ))}
-                                <button className="px-7 py-2.5 bg-blue-600 text-white rounded-full font-black text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-600/30">FINAL VERDICT</button>
+                                <button className="px-8 py-3 bg-blue-600 text-white rounded-full font-black text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-600/30">FINAL VERDICT</button>
                             </div>
                         </div>
                     </nav>
 
                     {/* Hero Section */}
-                    <header className="relative pt-64 pb-48 px-6 text-center overflow-hidden">
+                    <header className="relative pt-72 pb-56 px-8 text-center overflow-hidden">
                         <div className="absolute inset-0 z-0">
-                            <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[80%] bg-blue-600/10 blur-[160px] rounded-full"></div>
-                            <div className="absolute bottom-[-10%] left-[-10%] w-[70%] h-[70%] bg-indigo-600/10 blur-[160px] rounded-full"></div>
+                            <div className="absolute top-[-30%] right-[-10%] w-[90%] h-[90%] bg-blue-600/10 blur-[180px] rounded-full"></div>
+                            <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-600/10 blur-[180px] rounded-full"></div>
                         </div>
-                        <div className="max-w-5xl mx-auto relative z-10 animate-reveal">
-                            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-blue-500/30 bg-blue-500/5 text-blue-400 text-[10px] font-black mb-10 uppercase tracking-[0.4em]">Confidential Investment Report 2025</div>
-                            <h1 className="text-7xl md:text-9xl font-black mb-12 leading-[0.9] tracking-tighter">
+                        <div className="max-w-6xl mx-auto relative z-10 reveal">
+                            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[11px] font-black mb-12 uppercase tracking-[0.5em]">Investment Analysis Portfolio 2025</div>
+                            <h1 className="text-7xl md:text-[10rem] font-black mb-14 leading-[0.85] tracking-tighter">
                                 ZERO REGRET,<br/>
-                                <span className="text-bloom italic">BEST STRATEGY.</span>
+                                <span className="text-bloom italic font-black uppercase">Best Asset.</span>
                             </h1>
-                            <p className="text-slate-400 text-xl md:text-2xl max-w-3xl mx-auto font-light leading-relaxed mb-20">
-                                완벽한 집은 없습니다. 하지만 <strong className="text-white underline underline-offset-8 decoration-blue-500">우리 가족의 타임라인에서 가장 압도적인 해답</strong>은 있습니다. 2030 서울 상급지 진입을 위한 필승 로드맵.
+                            <p className="text-slate-400 text-xl md:text-3xl max-w-4xl mx-auto font-light leading-relaxed mb-24">
+                                힐스테이트 부평 59A: 주거의 평온함과 자산의 도약을 동시에 확보하는<br/>
+                                <strong className="text-white font-black underline underline-offset-[14px] decoration-blue-500">우리 가족을 위한 유일한 '징검다리' 전략</strong>
                             </p>
-                            <div className="flex flex-wrap justify-center gap-6">
-                                <a href="#matrix" className="px-12 py-5 bg-white text-slate-950 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:-translate-y-1">분석 결과 확인</a>
-                                <a href="#finance" className="px-12 py-5 bg-slate-900 text-white border border-white/10 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all backdrop-blur-md">수익 시뮬레이션</a>
+                            <div className="flex flex-wrap justify-center gap-8">
+                                <a href="#matrix" className="px-14 py-6 bg-white text-slate-950 rounded-[2rem] font-black text-xl hover:bg-blue-50 transition-all shadow-2xl hover:-translate-y-2">분석 리포트 시작</a>
+                                <a href="#finance" className="px-14 py-6 bg-slate-900 text-white border border-white/10 rounded-[2rem] font-black text-xl hover:bg-slate-800 transition-all backdrop-blur-md">상환액 계산기</a>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-7xl mx-auto px-6 space-y-48">
+                    <main className="max-w-7xl mx-auto px-8 space-y-60">
 
-                        {/* 1. Macro Context (Bento Grid) */}
+                        {/* 1. 거시적 환경 (Market Context) */}
                         <section id="macro" className="scroll-mt-32">
-                            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                            <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                                 <div>
-                                    <h2 className="text-5xl font-black mb-4 tracking-tighter">MACRO CONTEXT</h2>
-                                    <p className="text-slate-500 text-lg italic">"왜 지금 매수해야 하는가?"에 대한 거시적 응답</p>
+                                    <h2 className="text-6xl font-black mb-6 tracking-tighter uppercase leading-none">Market<br/>Context</h2>
+                                    <p className="text-slate-500 text-xl italic font-light">"왜 지금 매수해야 하는가?"에 대한 데이터적 응답</p>
                                 </div>
-                                <div className="text-right text-6xl font-black text-slate-900/50">01</div>
+                                <div className="text-right text-8xl font-black text-slate-900/40">01</div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="bento-card p-10 group">
-                                    <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
-                                        <Icon name="TrendingUp" size={32} className="text-blue-400" />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                                <div className="bento-card p-12 group">
+                                    <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center mb-12 group-hover:scale-110 transition-transform">
+                                        <Icon name="TrendingUp" size={40} className="text-blue-400" />
                                     </div>
-                                    <h3 className="text-2xl font-bold mb-4">공급 절벽 가시화</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed mb-6">수도권 인허가 및 착공 건수가 역대 최저치를 기록 중입니다. 2026-27년 신축 아파트 희소성이 폭발할 것이 데이터로 증명됩니다.</p>
-                                    <div className="text-[10px] font-black text-blue-500/60 uppercase tracking-widest italic">#Supply_Shortage</div>
+                                    <h3 className="text-3xl font-bold mb-6 italic text-white">공급 절벽 가시화</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed mb-8">수도권 아파트 인허가/착공 건수가 역대 최저치를 경신하고 있습니다. 2026-27년 신축 희소성 폭발은 이미 확정된 미래입니다.</p>
+                                    <span className="text-[10px] font-black text-blue-500/60 uppercase tracking-[0.3em]">Supply Crunch Alert</span>
                                 </div>
-                                <div className="bento-card p-10 group">
-                                    <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
-                                        <Icon name="Landmark" size={32} className="text-indigo-400" />
+                                <div className="bento-card p-12 group">
+                                    <div className="w-20 h-20 bg-indigo-600/10 rounded-3xl flex items-center justify-center mb-12 group-hover:scale-110 transition-transform">
+                                        <Icon name="Landmark" size={40} className="text-indigo-400" />
                                     </div>
-                                    <h3 className="text-2xl font-bold mb-4">금리 피벗 사이클</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed mb-6">미 연준과 한국은행의 금리 인하 기조가 시작되었습니다. 신생아 특례 대출이라는 사상 초유의 저리 레버리지를 확보할 마지막 기회입니다.</p>
-                                    <div className="text-[10px] font-black text-indigo-500/60 uppercase tracking-widest italic">#Interest_Rate_Pivot</div>
+                                    <h3 className="text-3xl font-bold mb-6 italic text-white">금리 피벗 진입</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed mb-8">글로벌 금리 인하 사이클이 시작되었습니다. '신생아 특례'라는 사상 유례없는 2%대 저리 고정금리를 확보할 수 있는 마지막 기회입니다.</p>
+                                    <span className="text-[10px] font-black text-indigo-500/60 uppercase tracking-[0.3em]">Interest Rate Pivot</span>
                                 </div>
-                                <div className="bento-card p-10 group">
-                                    <div className="w-16 h-16 bg-cyan-400/10 rounded-2xl flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
-                                        <Icon name="Zap" size={32} className="text-cyan-400" />
+                                <div className="bento-card p-12 group">
+                                    <div className="w-20 h-20 bg-cyan-400/10 rounded-3xl flex items-center justify-center mb-12 group-hover:scale-110 transition-transform">
+                                        <Icon name="Zap" size={40} className="text-cyan-400" />
                                     </div>
-                                    <h3 className="text-2xl font-bold mb-4">GTX-B 모멘텀</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed mb-6">철도 착공은 단순한 편의를 넘어 부동산 가치의 '퀀텀 점프'를 의미합니다. 부평역 1정거장, 서울역 20분대의 가치는 아직 저평가되어 있습니다.</p>
-                                    <div className="text-[10px] font-black text-cyan-400/60 uppercase tracking-widest italic">#Infrastructure_Leap</div>
+                                    <h3 className="text-3xl font-bold mb-6 italic text-white">GTX-B 모멘텀</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed mb-8">부평역에서 서울역까지 20분대 주파. 단순한 시간 단축을 넘어 해당 입지의 부동산 가치 자체가 '퀀텀 점프'하는 직접 수혜지입니다.</p>
+                                    <span className="text-[10px] font-black text-cyan-400/60 uppercase tracking-[0.3em]">Infrastructure Leap</span>
                                 </div>
                             </div>
                         </section>
 
-                        {/* 2. My Status & Selection Process */}
-                        <section className="bg-slate-900/50 rounded-[4rem] p-12 md:p-24 border border-white/5 relative overflow-hidden">
-                            <div className="grid lg:grid-cols-2 gap-24 items-center relative z-10">
+                        {/* 2. Selection Process (Funnel Logic) */}
+                        <section className="bg-slate-900/50 rounded-[5rem] p-12 md:p-32 border border-white/5 relative overflow-hidden shadow-2xl">
+                            <div className="grid lg:grid-cols-2 gap-32 items-center relative z-10">
                                 <div>
-                                    <h2 className="text-5xl font-black mb-12 leading-tight">나의 상황 및<br/><span className="text-blue-400 text-bloom italic">논리적 소거 과정</span></h2>
-                                    <div className="space-y-10">
-                                        <div className="flex gap-8">
-                                            <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-blue-600/20 shrink-0">1</div>
+                                    <h2 className="text-5xl md:text-6xl font-black mb-16 leading-tight">나의 상황 및<br/><span className="text-blue-400 text-bloom italic uppercase font-black">Selection Process</span></h2>
+                                    <div className="space-y-12">
+                                        <div className="flex gap-10">
+                                            <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl shadow-blue-600/30 shrink-0">1</div>
                                             <div>
-                                                <h4 className="text-xl font-bold mb-3 text-white">가족 구성 및 실거주 니즈</h4>
-                                                <p className="text-slate-400 leading-relaxed">1988년생 부부 + 9개월 자녀. 초품아(0m), 평지, 대단지는 아이의 안전과 아내의 육아 편의를 위해 절대 포기할 수 없는 '가장 큰 상수'임.</p>
+                                                <h4 className="text-2xl font-bold mb-4 text-white">가족의 현재와 미래</h4>
+                                                <p className="text-slate-400 text-lg leading-relaxed">1988년생 가장, 아내, 9개월 자녀. 0m 초품아와 완전 평지 입지는 아이의 안전과 부부의 육아 퇴근을 위한 '절대 타협 불가능한 조건'임.</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-8">
-                                            <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-blue-600/20 shrink-0">2</div>
+                                        <div className="flex gap-10">
+                                            <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl shadow-blue-600/30 shrink-0">2</div>
                                             <div>
-                                                <h4 className="text-xl font-bold mb-3 text-white">재무적 한계 (Constraints)</h4>
-                                                <p className="text-slate-400 leading-relaxed">총 예산 5.7~5.9억 이내. 대출 4억 실행 시 월 원리금 상환액을 가계 소득의 30% 수준으로 통제해야 함.</p>
+                                                <h4 className="text-2xl font-bold mb-4 text-white">재무적 마지노선</h4>
+                                                <p className="text-slate-400 text-lg leading-relaxed">자본 1.7억 + 대출 4억 수준의 예산(5.7억 내외). 원리금 상환이 삶의 질을 파괴하지 않는 체증식 설계가 필수적임.</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-8 text-emerald-400">
-                                            <div className="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-xl shadow-emerald-600/20 shrink-0">3</div>
+                                        <div className="flex gap-10 text-emerald-400">
+                                            <div className="w-16 h-16 bg-emerald-600 text-white rounded-3xl flex items-center justify-center font-black text-2xl shadow-2xl shadow-emerald-600/30 shrink-0">3</div>
                                             <div>
-                                                <h4 className="text-xl font-bold mb-3">최종 결론 (Conclusion)</h4>
-                                                <p className="text-slate-200 font-medium leading-relaxed">범박 일루미의 교통 고립 리스크, 안양 라인의 노후 환경, 송내의 유흥가 인접을 모두 소거하고 남은 유일한 <strong className="underline">무결점 육각형 단지</strong>.</p>
+                                                <h4 className="text-2xl font-bold mb-4 italic uppercase">Final Conclusion</h4>
+                                                <p className="text-slate-200 text-lg font-medium leading-relaxed italic">"범박 일루미의 교통 고립, 안양의 노후화, 송내의 유흥가 소음을 모두 걷어내고 남은 유일한 최적의 답안."</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <div className="bento-card p-8 opacity-40 grayscale"><span className="text-xs font-bold block mb-2 uppercase tracking-widest text-slate-500">Tier 1 Filter</span><h4 className="font-bold text-xl">수도권 전체 6억 이하 매물</h4></div>
-                                    <div className="flex justify-center"><Icon name="ArrowDown" className="text-slate-700 animate-bounce" /></div>
-                                    <div className="bento-card p-8 opacity-70 border-blue-500/20"><span className="text-xs font-bold block mb-2 uppercase tracking-widest text-slate-400">Tier 2 Filter</span><h4 className="font-bold text-xl italic">1호선 라인 핵심 9개 단지</h4></div>
-                                    <div className="flex justify-center"><Icon name="ArrowDown" className="text-slate-600 animate-bounce" /></div>
-                                    <div className="bento-card p-10 border-blue-600 bg-blue-600 shadow-2xl shadow-blue-600/40 transform scale-105">
-                                        <span className="text-[10px] font-black block mb-2 uppercase tracking-widest text-blue-100">Final Candidate</span>
-                                        <h4 className="font-black text-3xl italic">HILLSTATE BUPYEONG 59A</h4>
-                                        <div className="mt-6 flex items-center gap-2 text-xs font-bold"><Icon name="CheckCircle2" /> 과락 없는 유일한 대안</div>
+                                <div className="space-y-8 relative">
+                                    <div className="absolute inset-0 bg-blue-500/10 blur-[150px] rounded-full"></div>
+                                    <div className="bento-card p-10 opacity-30 grayscale"><span className="text-[10px] font-black block mb-3 uppercase tracking-widest text-slate-500">Tier 1: Budget Cap</span><h4 className="font-bold text-2xl italic">수도권 전체 6억 이하 매물</h4></div>
+                                    <div className="flex justify-center text-slate-700 animate-bounce"><Icon name="ArrowDown" size={32} /></div>
+                                    <div className="bento-card p-10 opacity-60 border-blue-500/20"><span className="text-[10px] font-black block mb-3 uppercase tracking-widest text-slate-400">Tier 2: 1-Line Candidates</span><h4 className="font-bold text-2xl italic italic">1호선 직결 안양·석수 9개 단지</h4></div>
+                                    <div className="flex justify-center text-slate-500 animate-bounce"><Icon name="ArrowDown" size={32} /></div>
+                                    <div className="bento-card p-12 bg-blue-600 border-white/20 shadow-[0_0_100px_rgba(37,99,235,0.4)] transform scale-110">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-blue-100">Final Candidate Picked</span>
+                                            <Icon name="Award" className="text-blue-100" size={24} />
+                                        </div>
+                                        <h4 className="font-black text-4xl italic tracking-tighter">HILLSTATE BUPYEONG 59A</h4>
+                                        <div className="mt-8 flex items-center gap-3 text-sm font-black italic"><Icon name="CheckCircle2" size={18} /> "과락 없는 유일한 육각형 밸런스"</div>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* 3. Analysis Matrix & Detail Table */}
+                        {/* 3. Detailed Matrix & Comparison */}
                         <section id="matrix" className="scroll-mt-32">
-                            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
-                                <h2 className="text-5xl font-black tracking-tighter uppercase">Selection Matrix</h2>
+                            <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
+                                <h2 className="text-6xl font-black tracking-tighter uppercase leading-none">Evaluation<br/>Matrix</h2>
                                 <button 
                                     onClick={() => setShowDetailMatrix(!showDetailMatrix)}
-                                    className="px-6 py-2 bg-slate-800 rounded-full text-xs font-bold hover:bg-slate-700 transition flex items-center gap-2"
+                                    className="px-10 py-4 bg-slate-800 rounded-[2rem] text-xs font-black uppercase tracking-[0.3em] hover:bg-slate-700 transition flex items-center gap-3 border border-white/10"
                                 >
-                                    <Icon name="List" size={14} /> {showDetailMatrix ? "상세 비교표 접기" : "단지별 상세 데이터 열기"}
+                                    <Icon name="List" size={16} /> {showDetailMatrix ? "Hide Detailed Data" : "Show Full Comparison Table"}
                                 </button>
                             </div>
                             
-                            <div className="grid lg:grid-cols-2 gap-12 items-center">
-                                <div className="bento-card p-12 flex flex-col items-center">
-                                    <h3 className="text-lg font-black text-slate-500 mb-10 uppercase tracking-[0.4em] italic">Hillstate Radar Chart</h3>
-                                    <div className="h-[400px] w-full">
+                            <div className="grid lg:grid-cols-2 gap-20 items-center">
+                                <div className="bento-card p-16 flex flex-col items-center shadow-inner">
+                                    <h3 className="text-xl font-black text-slate-500 mb-14 uppercase tracking-[0.5em] italic">Hillstate Radar Analytics</h3>
+                                    <div className="h-[450px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                                 <PolarGrid stroke="#1e293b" />
-                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 13, fontWeight: 'bold' }} />
+                                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 14, fontWeight: '900' }} />
                                                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
-                                                <Radar name="힐스테이트 부평" dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.5} />
-                                                <Radar name="주변 단지 평균" dataKey="B" stroke="#64748b" fill="#64748b" fillOpacity={0.1} />
-                                                <Legend />
-                                                <Tooltip />
+                                                <Radar name="힐스테이트 부평" dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
+                                                <Radar name="주변 단지 평균" dataKey="B" stroke="#475569" fill="#475569" fillOpacity={0.1} />
+                                                <Legend wrapperStyle={{ paddingTop: '30px' }} />
+                                                <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }} />
                                             </RadarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
-                                <div className="space-y-8">
-                                    <div className="bento-card p-8 border-l-4 border-l-blue-600">
-                                        <h4 className="text-2xl font-bold text-white mb-3 flex items-center gap-3"><Icon name="Award" className="text-blue-400"/> 투자가치 (92점)</h4>
-                                        <p className="text-slate-400 text-sm leading-relaxed">부평구 대장주 지위 확립. GTX-B 개통 호재를 가장 가까이서 누리는 신축 브랜드 대단지. 하락장에서도 견고한 하방 경직성을 자랑함.</p>
+                                <div className="space-y-10">
+                                    <div className="bento-card p-10 border-l-8 border-l-blue-600 bg-blue-600/5">
+                                        <h4 className="text-3xl font-black text-white mb-4 flex items-center gap-4 italic"><Icon name="Zap" className="text-blue-400" size={28}/> 투자가치 (95점)</h4>
+                                        <p className="text-slate-400 text-lg leading-relaxed font-light italic">"부평구 신축 대장주로서의 지위는 GTX 개통 시점에 완성될 것. 저평가된 백운역세권의 직접적 수혜지."</p>
                                     </div>
-                                    <div className="bento-card p-8 border-l-4 border-l-emerald-600">
-                                        <h4 className="text-2xl font-bold text-white mb-3 flex items-center gap-3"><Icon name="Baby" className="text-emerald-400"/> 육아환경 (100점)</h4>
-                                        <p className="text-slate-400 text-sm leading-relaxed">완전 평지, 단지와 초등학교가 맞닿은 0m 초품아. 자녀의 안전한 통학은 아내의 스트레스 감소와 직결되는 압도적 장점.</p>
+                                    <div className="bento-card p-10 border-l-8 border-l-emerald-600 bg-emerald-600/5">
+                                        <h4 className="text-3xl font-black text-white mb-4 flex items-center gap-4 italic"><Icon name="Baby" className="text-emerald-400" size={28}/> 육아환경 (100점)</h4>
+                                        <p className="text-slate-400 text-lg leading-relaxed font-light italic">"완전 평지 0m 초품아. 아이의 유년기에 누리는 '통학 안정성'은 단순한 거주 만족도를 넘어 환금성의 핵심 요소."</p>
                                     </div>
-                                    <div className="bento-card p-8 border-l-4 border-l-yellow-600">
-                                        <h4 className="text-2xl font-bold text-white mb-3 flex items-center gap-3"><Icon name="Train" className="text-yellow-400"/> 출퇴근 편의 (75점)</h4>
-                                        <p className="text-slate-400 text-sm leading-relaxed">백운역 도보 7분, 신도림 30분대, 시청 55분대 진입. 맞벌이 부부의 '시간 자산'을 확보해주는 현실적인 마지노선 입지.</p>
+                                    <div className="bento-card p-10 border-l-8 border-l-yellow-500 bg-yellow-500/5">
+                                        <h4 className="text-3xl font-black text-white mb-4 flex items-center gap-4 italic"><Icon name="Train" className="text-yellow-400" size={28}/> 출퇴근 편의 (78점)</h4>
+                                        <p className="text-slate-400 text-lg leading-relaxed font-light italic">"신도림 35분, 시청 55분. 부평-부천 라인에서 맞벌이 부부가 감내할 수 있는 최적의 시간 가용 범위."</p>
                                     </div>
                                 </div>
                             </div>
 
                             {showDetailMatrix && (
-                                <div className="mt-12 bento-card overflow-hidden animate-reveal border border-blue-500/20">
-                                    <div className="p-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                                        <h3 className="text-2xl font-black tracking-tight">🏆 종합 비교 데이터 시트</h3>
-                                        <span className="text-[10px] font-bold text-slate-500">Price Fixed: 5.7억 (84타입 환산)</span>
+                                <div className="mt-16 bento-card overflow-hidden animate-reveal border border-blue-500/30">
+                                    <div className="p-10 border-b border-white/5 bg-slate-900/60 flex justify-between items-center">
+                                        <h3 className="text-3xl font-black tracking-tighter uppercase italic">Competitive Data Sheet</h3>
+                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white/5 px-4 py-1 rounded-full italic">Update: 2025.12</div>
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left text-sm border-collapse">
                                             <thead>
-                                                <tr className="bg-slate-950 text-slate-500 uppercase tracking-widest font-black text-[10px]">
-                                                    <th className="p-6">평가 항목</th>
-                                                    <th className="p-6 text-blue-400">힐스테이트 부평 (Win)</th>
-                                                    <th className="p-6">범박 일루미</th>
-                                                    <th className="p-6">송내 자이</th>
-                                                    <th className="p-6 text-red-400">부개 SK뷰</th>
+                                                <tr className="bg-slate-950 text-slate-500 uppercase tracking-[0.4em] font-black text-[11px]">
+                                                    <th className="p-8">평가 항목</th>
+                                                    <th className="p-8 text-blue-400 bg-blue-400/5 italic">힐스테이트 부평 (Chosen)</th>
+                                                    <th className="p-8 italic">범박 일루미스테이트</th>
+                                                    <th className="p-8 italic">송내 자이</th>
+                                                    <th className="p-8 italic text-red-400">부개 SK뷰 해모로</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5 text-slate-300 font-medium">
                                                 <tr className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-6 bg-white/5 font-bold">1. 서울 접근성</td>
-                                                    <td className="p-6 text-blue-400 font-black italic table-focus">중상 (1호선+GTX)</td>
-                                                    <td className="p-6 text-red-500">불리 (고립된 섬)</td>
-                                                    <td className="p-6 text-emerald-400">최상 (특급역세권)</td>
-                                                    <td className="p-6">상 (부개역)</td>
+                                                    <td className="p-8 bg-white/5 font-black text-slate-400 italic">1. 서울 접근성</td>
+                                                    <td className="p-8 text-blue-400 font-black italic bg-blue-500/10">중상 (1호선+GTX)</td>
+                                                    <td className="p-8 text-red-500 italic">불리 (고립된 입지)</td>
+                                                    <td className="p-8 text-emerald-400 italic font-bold italic">최상 (특급 역세권)</td>
+                                                    <td className="p-8 italic">상 (부개역 인접)</td>
                                                 </tr>
                                                 <tr className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-6 bg-white/5 font-bold">2. 육아/교육</td>
-                                                    <td className="p-6 text-blue-400 font-black italic table-focus">최상 (0m 초품아)</td>
-                                                    <td className="p-6">우수 (대단지 인프라)</td>
-                                                    <td className="p-6 text-red-500">미흡 (유흥가 혼재)</td>
-                                                    <td className="p-6">우수 (초품아)</td>
+                                                    <td className="p-8 bg-white/5 font-black text-slate-400 italic">2. 교육/초품아</td>
+                                                    <td className="p-8 text-blue-400 font-black italic bg-blue-500/10">최상 (0m 도보통학)</td>
+                                                    <td className="p-8 italic">우수 (대단지 인프라)</td>
+                                                    <td className="p-8 text-red-500 italic">미흡 (유흥가 혼재)</td>
+                                                    <td className="p-8 italic">상 (도보 5분)</td>
                                                 </tr>
                                                 <tr className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-6 bg-white/5 font-bold">3. 주변 환경</td>
-                                                    <td className="p-6 table-focus">보통 (노후 상권)</td>
-                                                    <td className="p-6 text-emerald-400 font-bold">최상 (청정/숲세권)</td>
-                                                    <td className="p-6 text-red-500">경고 (모텔촌/술집)</td>
-                                                    <td className="p-6 text-red-400">경고 (유흥상가)</td>
+                                                    <td className="p-8 bg-white/5 font-black text-slate-400 italic">3. 단지 환경/소음</td>
+                                                    <td className="p-8 bg-blue-500/10 italic">보통 (상권 재개발중)</td>
+                                                    <td className="p-8 text-emerald-400 font-black italic">최상 (숲세권/신축)</td>
+                                                    <td className="p-8 text-red-500 italic font-bold">경고 (모텔촌/유흥)</td>
+                                                    <td className="p-8 text-red-400 italic">경고 (철길직면/상권)</td>
                                                 </tr>
-                                                <tr className="hover:bg-white/5 transition-colors font-black">
-                                                    <td className="p-6 bg-white/5">4. 최종 판결</td>
-                                                    <td className="p-6 text-blue-500 bg-blue-500/10 table-focus text-lg">STRATEGIC BEST</td>
-                                                    <td className="p-6">감성적 선택</td>
-                                                    <td className="p-6">투자 리스크 과다</td>
-                                                    <td className="p-6">육아 환경 부적합</td>
+                                                <tr className="hover:bg-white/5 transition-colors">
+                                                    <td className="p-8 bg-white/5 font-black text-slate-400 italic font-black">4. 종합 결론</td>
+                                                    <td className="p-8 text-blue-500 bg-blue-500/20 text-xl font-black italic">STRATEGIC BEST</td>
+                                                    <td className="p-8 italic font-bold">감성적 실거주</td>
+                                                    <td className="p-8 italic">투자 리스크 과다</td>
+                                                    <td className="p-8 italic">육아 환경 부적합</td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="p-6 bg-blue-900/10 border-t border-white/5 text-center text-xs text-blue-300 font-bold">
-                                        💡 결론: 힐스테이트 부평은 타 단지의 치명적 약점(교통 고립, 유흥가 소음)을 완벽히 피한 "가장 안전한 육각형"입니다.
+                                    <div className="p-10 bg-blue-900/10 border-t border-white/5 text-center text-sm text-blue-300 font-black italic">
+                                        💡 Strategic Verdict: 힐스테이트 부평은 "치명적 결점"이 없는 유일한 단지로서, 실거주 만족도와 자산 안정성의 가장 높은 합의점을 가집니다.
                                     </div>
                                 </div>
                             )}
                         </section>
 
-                        {/* 4. Infrastructure Map */}
+                        {/* 4. Life Infrastructure Map */}
                         <section id="infra" className="scroll-mt-32">
-                            <div className="text-center mb-16">
-                                <h2 className="text-5xl font-black mb-4 uppercase tracking-tighter">Life Infra Map</h2>
-                                <p className="text-slate-500 text-lg">반경 1km 내에 우리 가족을 위한 모든 핵심 인프라가 집중되어 있습니다.</p>
+                            <div className="text-center mb-24">
+                                <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter leading-none">Life<br/>Infrastructure</h2>
+                                <p className="text-slate-500 text-2xl font-light">반경 1km 내에 우리 가족의 '현재'와 '미래'가 공존합니다.</p>
                             </div>
-                            <div className="grid lg:grid-cols-12 gap-10 h-[650px]">
-                                <div className="lg:col-span-8 bento-card p-4 relative shadow-2xl">
+                            <div className="grid lg:grid-cols-12 gap-12 h-[750px]">
+                                <div className="lg:col-span-8 bento-card p-6 shadow-2xl relative">
                                     <div id="infra-map"></div>
-                                    <div className="absolute top-8 right-8 bg-slate-950/80 backdrop-blur-lg p-6 rounded-3xl border border-white/10 z-[1000] text-[10px] space-y-3 font-bold">
-                                        <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-blue-600"></div> 도보 10분 반경 (Safe)</div>
-                                        <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-600"></div> 유흥가 격리 구역 (Red)</div>
-                                        <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-green-500"></div> 캠프마켓 공원 예정지</div>
-                                    </div>
                                 </div>
-                                <div className="lg:col-span-4 flex flex-col gap-6">
-                                    <div className="bento-card p-8 bg-gradient-to-br from-blue-600/10 to-transparent">
-                                        <h4 className="text-sm font-black text-blue-400 mb-6 uppercase tracking-widest flex items-center gap-2"><Icon name="Clock" /> Time Simulation</h4>
-                                        <div className="space-y-6">
-                                            <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                                                <span className="text-xs text-slate-500">아내 (신도림역)</span>
-                                                <span className="text-xl font-black text-white">약 38분</span>
+                                <div className="lg:col-span-4 flex flex-col gap-8">
+                                    <div className="bento-card p-10 bg-gradient-to-br from-blue-600/10 to-transparent">
+                                        <h4 className="text-xs font-black text-blue-400 mb-8 uppercase tracking-[0.4em] flex items-center gap-3 italic"><Icon name="Clock" /> Transit Intelligence</h4>
+                                        <div className="space-y-10">
+                                            <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Wife</span>
+                                                    <span className="text-lg font-bold text-slate-300">신도림역 (1호선)</span>
+                                                </div>
+                                                <span className="text-3xl font-black text-white italic">38<span className="text-sm not-italic ml-1 opacity-50">min</span></span>
                                             </div>
-                                            <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                                                <span className="text-xs text-slate-500">남편 (시청역)</span>
-                                                <span className="text-xl font-black text-white">약 58분</span>
+                                            <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Husband</span>
+                                                    <span className="text-lg font-bold text-slate-300">시청역 (1호선)</span>
+                                                </div>
+                                                <span className="text-3xl font-black text-white italic">58<span className="text-sm not-italic ml-1 opacity-50">min</span></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bento-card p-8 flex-1 overflow-y-auto custom-scrollbar">
-                                        <h4 className="text-sm font-black text-slate-500 mb-6 uppercase tracking-widest flex items-center gap-2"><Icon name="MapPin" /> 주요 시설 리스트</h4>
-                                        <div className="space-y-4">
+                                    <div className="bento-card p-10 flex-1 overflow-y-auto custom-scrollbar shadow-inner">
+                                        <h4 className="text-[11px] font-black text-slate-500 mb-8 uppercase tracking-[0.4em] flex items-center gap-3 italic"><Icon name="MapPin" /> Facility Check-In</h4>
+                                        <div className="space-y-5">
                                             {[
-                                                { n: '부개서초등학교', d: '50m', t: 'school' },
-                                                { n: '백운역 (1호선)', d: '500m', t: 'subway' },
-                                                { n: '캠프마켓 공원', d: '400m', t: 'park' },
-                                                { n: '롯데마트 부평역', d: '1.2km', t: 'mart' },
-                                                { n: '인천성모병원', d: '1.8km', t: 'hospital' }
+                                                { n: '부개서초등학교', d: '정문까지 50m (도보 1분)', t: 'S+', c: 'text-emerald-400' },
+                                                { n: '백운역 (1호선)', d: '7번출구 500m (도보 7분)', t: 'A', c: 'text-indigo-400' },
+                                                { n: '캠프마켓 공원', d: '후문에서 400m (도보 5분)', t: 'A+', c: 'text-blue-400' },
+                                                { n: '부평역 (GTX-B)', d: '직선거리 1.2km (버스 2정거장)', t: 'S', c: 'text-cyan-400' },
+                                                { n: '롯데마트 부평역점', d: '차량 5분 / 지하철 1정거장', t: 'B+', c: 'text-slate-400' },
+                                                { n: '인천성모병원', d: '차량 8분 (대형병원 인프라)', t: 'A', c: 'text-red-400' }
                                             ].map((item, i) => (
-                                                <div key={i} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                                                    <span className="font-bold text-xs">{item.n}</span>
-                                                    <span className="text-[10px] text-slate-500 font-black">{item.d}</span>
+                                                <div key={i} className="flex justify-between items-center p-5 bg-white/5 rounded-3xl hover:bg-white/10 transition-all group">
+                                                    <div>
+                                                        <span className="font-black text-sm block mb-1 group-hover:text-blue-400 transition-colors italic">{item.n}</span>
+                                                        <span className="text-[10px] text-slate-500 font-black uppercase italic tracking-widest">{item.d}</span>
+                                                    </div>
+                                                    <span className={`text-xl font-black italic ${item.c}`}>{item.t}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -473,95 +458,111 @@
                             </div>
                         </section>
 
-                        {/* 5. Finance Lab (Specific Logic Applied) */}
-                        <section id="finance" className="bento-card p-12 md:p-24 scroll-mt-32 border-2 border-blue-500/20 shadow-[0_0_50px_rgba(59,130,246,0.1)]">
-                            <div className="flex flex-col lg:flex-row gap-24">
-                                <div className="lg:w-1/3">
-                                    <h2 className="text-6xl font-black mb-10 leading-tight">FINANCE<br/><span className="text-blue-400 italic underline underline-offset-8">LAB</span></h2>
-                                    <p className="text-slate-400 text-sm leading-loose mb-12">
-                                        신생아 특례 대출(3.99억/2.4%/30년 체증식)과 보험약관대출(3,000만/4%/이자만)의 정밀 시뮬레이션입니다. 화폐 가치 하락과 소득 상승 곡선을 활용한 최적의 설계입니다.
+                        {/* 5. Finance Lab: 정밀 상환 시뮬레이션 */}
+                        <section id="finance" className="bento-card p-16 md:p-32 scroll-mt-32 border-2 border-blue-500/20 shadow-[0_0_100px_rgba(59,130,246,0.15)] overflow-hidden">
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/5 blur-[150px] rounded-full"></div>
+                            <div className="flex flex-col lg:flex-row gap-32 relative z-10">
+                                <div className="lg:w-[40%]">
+                                    <h2 className="text-7xl font-black mb-12 leading-none uppercase italic tracking-tighter">Finance<br/><span className="text-blue-400 underline underline-offset-[16px] decoration-blue-500/40">Lab</span></h2>
+                                    <p className="text-slate-400 text-lg leading-relaxed mb-16 font-light">
+                                        신생아 특례 대출(3.99억/2.4%/30년 체증식)과 보험약관대출(3,000만/4%/이자만)의 복합 최적화 설계입니다. <br/><br/>
+                                        <strong className="text-white">체증식 상환</strong>은 초기에 상환액을 낮추고 자산 가치 상승기(3040)에 상환액을 높임으로써 현시점의 가처분 소득을 극대화하는 가장 영리한 금융 전략입니다.
                                     </p>
-                                    <div className="space-y-6">
-                                        <div className="p-10 bg-blue-600 rounded-[2.5rem] shadow-2xl shadow-blue-900/40 transform hover:scale-105 transition-transform">
-                                            <p className="text-[10px] text-blue-100 font-black mb-2 uppercase tracking-[0.3em]">Initial Monthly Pay (1yr 거치)</p>
-                                            <p className="text-5xl font-black italic">약 95<span className="text-xl font-bold not-italic ml-1">만원</span></p>
+                                    
+                                    <div className="grid grid-cols-1 gap-8">
+                                        <div className="p-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[3rem] shadow-2xl transform hover:scale-105 transition-transform cursor-default">
+                                            <p className="text-[11px] text-blue-100 font-black mb-4 uppercase tracking-[0.4em] italic opacity-70">Monthly Expense (Initial)</p>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-7xl font-black italic tracking-tighter">95</span>
+                                                <span className="text-2xl font-black italic opacity-80">만원</span>
+                                            </div>
+                                            <p className="mt-4 text-[10px] text-blue-200 font-bold italic tracking-widest uppercase">Repayment + Insurance Interest</p>
                                         </div>
-                                        <div className="p-10 bg-slate-800 rounded-[2.5rem] border border-white/5">
-                                            <p className="text-[10px] text-slate-500 font-black mb-2 uppercase tracking-[0.3em]">Insurance Loan Fixed Interest</p>
-                                            <p className="text-3xl font-black text-slate-300 italic">10<span className="text-lg font-bold not-italic ml-1">만원 / 고정</span></p>
+                                        <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem]">
+                                            <p className="text-[10px] text-slate-500 font-black mb-4 uppercase tracking-[0.4em] italic">Fixed Interest Baseline</p>
+                                            <div className="flex items-baseline gap-2 text-slate-300">
+                                                <span className="text-4xl font-black italic">10</span>
+                                                <span className="text-lg font-bold">만원 / 고정</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="lg:w-2/3">
-                                    <div className="h-[450px] w-full p-8 bg-slate-950/50 rounded-[3rem] border border-white/5">
+
+                                <div className="lg:w-[60%]">
+                                    <div className="h-[550px] w-full p-12 bg-slate-950/60 rounded-[4rem] border border-white/5 shadow-inner group">
+                                        <h4 className="text-[10px] font-black text-slate-600 mb-10 uppercase tracking-[0.6em] text-center italic">30-Year Cash Flow Projection</h4>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={financeData}>
+                                            <AreaChart data={financeFlow}>
                                                 <defs>
-                                                    <linearGradient id="colorPay" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5}/>
                                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                                     </linearGradient>
                                                 </defs>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                                <XAxis dataKey="year" stroke="#475569" fontSize={11} fontStyle="italic" />
-                                                <YAxis stroke="#475569" fontSize={11} tickFormatter={v => v + '만'} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)' }} />
-                                                <Area type="monotone" dataKey="payment" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorPay)" name="원리금(체증식)" />
-                                                <Line type="monotone" dataKey="insurance" stroke="#94a3b8" strokeDasharray="10 5" strokeWidth={2} name="보험이자 고정" />
+                                                <XAxis dataKey="year" stroke="#475569" fontSize={12} fontStyle="italic" dy={10} axisLine={false} tickLine={false} />
+                                                <YAxis stroke="#475569" fontSize={12} tickFormatter={v => v + '만'} axisLine={false} tickLine={false} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '24px', padding: '24px' }}
+                                                    itemStyle={{ color: '#fff', fontSize: '16px', fontWeight: '900', fontStyle: 'italic' }}
+                                                />
+                                                <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={6} fillOpacity={1} fill="url(#colorTotal)" name="월 합산 지출" />
+                                                <Line type="monotone" dataKey="insurance" stroke="#94a3b8" strokeDasharray="12 6" strokeWidth={2} name="고정 보험이자" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="mt-10 flex flex-wrap justify-center gap-12 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                        <div className="flex items-center gap-3"><div className="w-4 h-1.5 bg-blue-500 rounded-full"></div> Repayment Flow (Increasing)</div>
-                                        <div className="flex items-center gap-3"><div className="w-4 h-0.5 border-t border-dashed border-slate-600"></div> Fixed Cost Baseline</div>
+                                    <div className="mt-14 flex flex-wrap justify-center gap-16 text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 italic">
+                                        <div className="flex items-center gap-4"><div className="w-6 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></div> Increasing Curve</div>
+                                        <div className="flex items-center gap-4"><div className="w-6 h-0.5 border-t-2 border-dashed border-slate-600"></div> Fixed Fixed Point</div>
                                     </div>
-                                    <p className="mt-12 text-center text-xs text-slate-500 font-medium leading-relaxed italic">
-                                        * 체증식 상환은 초기 상환액을 낮추어 자산 형성기(3040)의 가처분 소득을 극대화하는 전략입니다.<br/>
-                                        30년 뒤의 350만원은 화폐 가치 하락으로 인해 체감상 현재의 150만원 수준일 것으로 분석됩니다.
-                                    </p>
+                                    <div className="mt-16 bg-white/5 p-8 rounded-[2rem] border border-white/5">
+                                        <p className="text-center text-xs text-slate-400 font-medium leading-relaxed italic uppercase tracking-widest">
+                                            "30년 뒤의 360만원은 화폐 가치 하락과 소득 상승을 고려할 때,<br/>체감상 현재의 150만원 수준일 것으로 분석됩니다. 인플레이션 헷지 전략의 정석입니다."
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* 6. Strategic Verdict & Facts */}
-                        <section className="grid lg:grid-cols-2 gap-12 scroll-mt-32">
-                            <div className="bento-card p-12">
-                                <h3 className="text-3xl font-black mb-10 flex items-center gap-4"><Icon name="ShieldCheck" className="text-blue-400" /> 팩트 체크 (Persuasion)</h3>
-                                <div className="space-y-10">
-                                    <div className="p-8 bg-white/5 rounded-3xl border-l-8 border-l-red-500/50">
-                                        <h4 className="font-bold text-white mb-3">부평은 외국인이 많아 위험하다?</h4>
-                                        <p className="text-xs text-slate-400 leading-relaxed">
-                                            <span className="text-red-400 font-black">Fact Check:</span> 백운역/부개동 일대는 순수 주거 타운입니다. 부평역 상업지구와 완전히 격리되어 있으며, 외국인 노동자 비중이 인천 내에서 가장 낮은 편에 속합니다. 오히려 학부모 비중이 압도적인 '안전지대'입니다.
+                        {/* 6. Facts vs Myths & Real Risks */}
+                        <section className="grid lg:grid-cols-2 gap-16 scroll-mt-32">
+                            <div className="bento-card p-16">
+                                <h3 className="text-4xl font-black mb-16 flex items-center gap-5 italic tracking-tighter uppercase leading-none text-blue-400"><Icon name="ShieldCheck" size={36} /> Fact Check</h3>
+                                <div className="space-y-12">
+                                    <div className="p-10 bg-white/5 rounded-[3rem] border-l-[12px] border-l-red-500/60 shadow-xl">
+                                        <h4 className="text-2xl font-black text-white mb-6 uppercase tracking-tight">부평은 외국인이 많아 위험하다?</h4>
+                                        <p className="text-sm text-slate-400 leading-relaxed font-light">
+                                            <span className="text-red-400 font-black italic">The Hard Truth:</span> 백운역/부개동 일대는 부평역 상권과 완전히 격리된 순수 주거 타운입니다. 아파트 중심 거주지로 외국인 노동자 거주 비중이 인천 내 최저 수준이며, 학부모와 신혼부부 비중이 압도적인 '안전한 갈라파고스'입니다.
                                         </p>
                                     </div>
-                                    <div className="p-8 bg-white/5 rounded-3xl border-l-8 border-l-emerald-500/50">
-                                        <h4 className="font-bold text-white mb-3">주변이 너무 노후되었다?</h4>
-                                        <p className="text-xs text-slate-400 leading-relaxed">
-                                            <span className="text-emerald-400 font-black">Fact Check:</span> 현재는 재개발 과도기입니다. 인근 캠프마켓 공원화(부평의 센트럴파크)와 노후 주택 정비가 완료되는 5년 뒤, 이곳은 부평 내 가장 쾌적한 랜드마크로 변모할 것입니다.
+                                    <div className="p-10 bg-white/5 rounded-[3rem] border-l-[12px] border-l-emerald-500/60 shadow-xl">
+                                        <h4 className="text-2xl font-black text-white mb-6 uppercase tracking-tight">주변 환경이 너무 노후되었다?</h4>
+                                        <p className="text-sm text-slate-400 leading-relaxed font-light">
+                                            <span className="text-emerald-400 font-black italic">The Opportunity:</span> 현재는 재개발 과도기입니다. 인근 캠프마켓 공원화 및 노후 상권 정비가 완료되는 5년 뒤, 이곳은 부평 내 유일한 '뉴 브랜드 타운'으로 가치가 재평가될 수밖에 없습니다.
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bento-card p-12">
-                                <h3 className="text-3xl font-black mb-10 flex items-center gap-4"><Icon name="AlertTriangle" className="text-yellow-500" /> 감수해야 할 것 (Objective Risk)</h3>
-                                <div className="space-y-10">
-                                    <div className="flex gap-6 items-start">
-                                        <div className="w-12 h-12 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center shrink-0 font-black">01</div>
+                            <div className="bento-card p-16">
+                                <h3 className="text-4xl font-black mb-16 flex items-center gap-5 italic tracking-tighter uppercase leading-none text-yellow-500"><Icon name="AlertTriangle" size={36} /> Real Risks</h3>
+                                <div className="space-y-12">
+                                    <div className="flex gap-8 items-start group">
+                                        <div className="w-16 h-16 bg-yellow-500/10 text-yellow-500 rounded-3xl flex items-center justify-center shrink-0 font-black text-2xl group-hover:bg-yellow-500 group-hover:text-black transition-all">01</div>
                                         <div>
-                                            <h4 className="font-bold text-white mb-2">지상철 구간 소음</h4>
-                                            <p className="text-xs text-slate-500 leading-relaxed">1호선 지상 구간 인접으로 인해 창문을 열었을 때 소음 발생 가능성. 단, KCC 이중 창호 설계로 닫았을 때는 무소음 수준 유지.</p>
+                                            <h4 className="text-2xl font-black text-white mb-4 uppercase italic">지상철 구간 소음</h4>
+                                            <p className="text-sm text-slate-500 leading-relaxed font-light italic">1호선 지상 구간 인접으로 인해 일부 라인 소음 가능성 존재. 단, 최신 KCC 이중 창호 설계로 폐쇄 시 무소음 수준이며, 소음 리스크는 이미 '가격'에 선반영됨.</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-6 items-start">
-                                        <div className="w-12 h-12 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center shrink-0 font-black">02</div>
+                                    <div className="flex gap-8 items-start group">
+                                        <div className="w-16 h-16 bg-yellow-500/10 text-yellow-500 rounded-3xl flex items-center justify-center shrink-0 font-black text-2xl group-hover:bg-yellow-500 group-hover:text-black transition-all">02</div>
                                         <div>
-                                            <h4 className="font-bold text-white mb-2">GTX-B 개통 지연 리스크</h4>
-                                            <p className="text-xs text-slate-500 leading-relaxed">국가 철도 사업 특성상 1-2년의 지연은 기정사실. 따라서 단기 매매보다는 5년 이상의 실거주 관점으로 접근하는 것이 필수적임.</p>
+                                            <h4 className="text-2xl font-black text-white mb-4 uppercase italic">GTX-B 개통 지연</h4>
+                                            <p className="text-sm text-slate-500 leading-relaxed font-light italic">국가 철도 사업 특성상 1-2년 지연은 상수임. 단기 매도보다는 5년 이상의 거주와 2030년 엑시트 타임라인을 길게 잡는 보수적 접근이 필요함.</p>
                                         </div>
                                     </div>
-                                    <div className="p-6 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-yellow-500 font-black italic leading-loose text-center">
-                                            "모든 리스크는 이미 '가격'에 반영되어 있습니다. 리스크가 소멸되는 시점이 바로 자산 가치가 폭발하는 시점입니다."
+                                    <div className="p-8 bg-yellow-500/5 border border-yellow-500/20 rounded-[2.5rem] mt-10">
+                                        <p className="text-[11px] text-yellow-600 font-black italic leading-loose text-center uppercase tracking-widest">
+                                            "모든 부동산 투자는 리스크를 싸게 사서 편리함을 비싸게 파는 게임입니다.<br/>지금의 불편함을 감내하는 자만이 상급지 엑시트 티켓을 거머쥡니다."
                                         </p>
                                     </div>
                                 </div>
@@ -570,108 +571,115 @@
 
                         {/* 7. Jumping Roadmap 2030 */}
                         <section id="roadmap" className="scroll-mt-32">
-                            <div className="text-center mb-20">
-                                <h2 className="text-5xl font-black mb-6 uppercase tracking-widest">Jump Roadmap 2030</h2>
-                                <p className="text-slate-500 text-lg">우리 가족을 위한 5개년 자산 점프 전략</p>
+                            <div className="text-center mb-32">
+                                <h2 className="text-7xl font-black mb-10 uppercase tracking-tighter leading-none italic">Jump Roadmap<br/>2030</h2>
+                                <p className="text-slate-500 text-2xl font-light italic">우리 가족의 5개년 자산 점프 전략 시나리오</p>
                             </div>
                             <div className="relative">
                                 <div className="timeline-line hidden lg:block"></div>
-                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                                    <div className="bento-card p-10 group bg-slate-900/40">
-                                        <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center font-black text-slate-500 mb-6 border border-white/5">01</div>
-                                        <h4 className="text-xl font-bold mb-3 text-white">2025: Decision</h4>
-                                        <p className="text-[10px] text-slate-500 italic leading-relaxed">신생아 특례 자격 확보.<br/>저평가된 부평 힐스테이트 59A 매수 완료.</p>
-                                    </div>
-                                    <div className="bento-card p-10 group bg-blue-600 shadow-2xl shadow-blue-600/30 transform scale-105">
-                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-black text-blue-600 mb-6 shadow-xl">02</div>
-                                        <h4 className="text-xl font-bold mb-3 text-white">2026-2029: Stable</h4>
-                                        <p className="text-[10px] text-blue-100 italic leading-relaxed">입주 및 주거 안정기.<br/>아이 유년기를 평지/초품아 단지에서 여유롭게 육아.</p>
-                                    </div>
-                                    <div className="bento-card p-10 group bg-slate-900/40">
-                                        <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center font-black text-slate-500 mb-6 border border-white/5">03</div>
-                                        <h4 className="text-xl font-bold mb-3 text-white">2028: Maturity</h4>
-                                        <p className="text-[10px] text-slate-500 italic leading-relaxed">캠프마켓 공원 개방.<br/>GTX-B 공사 진척에 따른 주변 환경 가시적 개선.</p>
-                                    </div>
-                                    <div className="bento-card p-10 group bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-2xl shadow-indigo-600/30">
-                                        <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center font-black text-white mb-6 border border-white/30">04</div>
-                                        <h4 className="text-xl font-bold mb-3 text-white">2030: Jump Exit</h4>
-                                        <p className="text-[10px] text-indigo-100 italic leading-relaxed">GTX-B 개통 호재 실현.<br/>비과세 매도 후 서울 마포·영등포 상급지 진입.</p>
-                                    </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 relative z-10">
+                                    {strategySteps.map((step, i) => (
+                                        <div key={i} className={`bento-card p-12 transition-all duration-700 ${i === 1 ? 'bg-blue-600 shadow-2xl shadow-blue-600/40 transform scale-110 border-blue-400' : 'bg-slate-900/40 opacity-80'}`}>
+                                            <div className={`w-14 h-14 rounded-full flex items-center justify-center font-black mb-10 text-xl italic ${i === 1 ? 'bg-white text-blue-600' : 'bg-slate-800 text-slate-500 border border-white/5'}`}>0{i+1}</div>
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.4em] mb-4 block ${i === 1 ? 'text-blue-100' : 'text-blue-500'}`}>{step.year}</span>
+                                            <h4 className="text-3xl font-black mb-6 text-white italic tracking-tighter">{step.title}</h4>
+                                            <p className={`text-sm leading-relaxed font-light italic ${i === 1 ? 'text-blue-50' : 'text-slate-400'}`}>{step.desc}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </section>
 
-                        {/* 8. Action Plan (Tabs Integration) */}
+                        {/* 8. Action Plan (Detailed Tabs) */}
                         <section id="action" className="scroll-mt-32">
-                            <div className="text-center mb-16">
-                                <h2 className="text-5xl font-black mb-6 uppercase tracking-tighter">Real Action Plan</h2>
-                                <p className="text-slate-500">실패 없는 임장을 위한 최종 체크리스트</p>
+                            <div className="text-center mb-20">
+                                <h2 className="text-6xl font-black mb-6 uppercase tracking-tighter italic leading-none">Action<br/>Plan</h2>
+                                <p className="text-slate-500 text-xl italic">임장부터 계약까지, 실패 없는 실행을 위한 가이드</p>
                             </div>
-                            <div className="bento-card p-12 overflow-hidden shadow-2xl">
-                                <div className="flex flex-wrap gap-4 mb-14 border-b border-white/5 pb-8 justify-center lg:justify-start">
-                                    {['check', 'qna', 'dong'].map(tabId => (
+                            <div className="bento-card p-12 lg:p-20 overflow-hidden shadow-2xl border-blue-500/20">
+                                <div className="flex flex-wrap gap-6 mb-20 border-b border-white/5 pb-12 justify-center lg:justify-start">
+                                    {[
+                                        { id: 'check', n: '✅ 임장 체크리스트' },
+                                        { id: 'qna', n: '🗣️ 중개사 Q&A' },
+                                        { id: 'dong', n: '🏢 추천 동 분석' }
+                                    ].map(tab => (
                                         <button 
-                                            key={tabId}
-                                            onClick={() => setActiveActionTab(tabId)}
-                                            className={`px-10 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] transition-all ${activeActionTab === tabId ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                                            key={tab.id}
+                                            onClick={() => setActiveActionTab(tab.id)}
+                                            className={`px-12 py-4 rounded-full text-xs font-black uppercase tracking-[0.4em] transition-all transform active:scale-95 ${activeActionTab === tab.id ? 'bg-blue-600 text-white shadow-2xl shadow-blue-600/40' : 'bg-slate-800 text-slate-500 hover:text-white border border-white/5'}`}
                                         >
-                                            {tabId === 'check' ? '✅ 임장 체크리스트' : tabId === 'qna' ? '🗣️ 중개사 Q&A' : '🏢 추천 동 분석'}
+                                            {tab.n}
                                         </button>
                                     ))}
                                 </div>
-                                <div className="min-h-[450px]">
+                                <div className="min-h-[550px]">
                                     {activeActionTab === 'check' && (
-                                        <div className="grid md:grid-cols-2 gap-16 animate-reveal">
-                                            <div className="space-y-8">
-                                                <h4 className="text-xl font-black text-blue-400 mb-8 border-b border-white/5 pb-4">내부 핵심 체크 (Inside)</h4>
-                                                <ul className="space-y-6">
-                                                    <li className="flex gap-4"><Icon name="CheckSquare" className="text-blue-500 shrink-0"/><div className="text-sm"><strong className="text-white block mb-1">누수/결로 유무</strong><p className="text-[10px] text-slate-500">세탁실 외벽 쪽 탄성코트 들뜸, 안방 욕실 천장 내부 누수 흔적 필히 확인.</p></div></li>
-                                                    <li className="flex gap-4"><Icon name="CheckSquare" className="text-blue-500 shrink-0"/><div className="text-sm"><strong className="text-white block mb-1">수압/배수 상태</strong><p className="text-[10px] text-slate-500">싱크대 물을 틀어놓고 화장실 변기를 내려 수압 변화 여부 체크.</p></div></li>
-                                                    <li className="flex gap-4"><Icon name="CheckSquare" className="text-blue-500 shrink-0"/><div className="text-sm"><strong className="text-white block mb-1">창호 소음 차단</strong><p className="text-[10px] text-slate-500">이중창을 닫았을 때 백운역 지상 구간 소음이 어느 정도로 차단되는지 귀 기울이기.</p></div></li>
+                                        <div className="grid md:grid-cols-2 gap-20 animate-reveal">
+                                            <div className="space-y-12">
+                                                <h4 className="text-2xl font-black text-blue-400 mb-10 border-b border-white/5 pb-6 italic uppercase tracking-widest">Inside Check</h4>
+                                                <ul className="space-y-10">
+                                                    <li className="flex gap-6 items-start">
+                                                        <Icon name="CheckSquare" className="text-blue-500 shrink-0 mt-1" size={24}/>
+                                                        <div className="text-lg leading-relaxed"><strong className="text-white block mb-2 font-black italic">누수 및 결로 흔적</strong><p className="text-sm text-slate-500 italic">안방 욕실 천장 안쪽, 세탁실 외벽 모서리 탄성코트 들뜸 여부를 손전등으로 확인.</p></div>
+                                                    </li>
+                                                    <li className="flex gap-6 items-start">
+                                                        <Icon name="CheckSquare" className="text-blue-500 shrink-0 mt-1" size={24}/>
+                                                        <div className="text-lg leading-relaxed"><strong className="text-white block mb-2 font-black italic">창호 소음 차단율</strong><p className="text-sm text-slate-500 italic">지하철 통과 시점에 창문을 닫고 내부 정적 정도를 귀 기울여 체감할 것.</p></div>
+                                                    </li>
+                                                    <li className="flex gap-6 items-start">
+                                                        <Icon name="CheckSquare" className="text-blue-500 shrink-0 mt-1" size={24}/>
+                                                        <div className="text-lg leading-relaxed"><strong className="text-white block mb-2 font-black italic">수압 및 배수 속도</strong><p className="text-sm text-slate-500 italic">싱크대와 욕실 수전을 동시에 틀었을 때 수압 변화가 미미한지 체크.</p></div>
+                                                    </li>
                                                 </ul>
                                             </div>
-                                            <div className="space-y-8">
-                                                <h4 className="text-xl font-black text-indigo-400 mb-8 border-b border-white/5 pb-4">공용부 및 주변 (Outside)</h4>
-                                                <ul className="space-y-6">
-                                                    <li className="flex gap-4"><Icon name="CheckSquare" className="text-indigo-500 shrink-0"/><div className="text-sm"><strong className="text-white block mb-1">주차 쾌적성</strong><p className="text-[10px] text-slate-500">평일 저녁 8시 이후 방문하여 이중 주차 여부와 지하 주차장 관리 상태 확인.</p></div></li>
-                                                    <li className="flex gap-4"><Icon name="CheckSquare" className="text-indigo-500 shrink-0"/><div className="text-sm"><strong className="text-white block mb-1">통학 동선</strong><p className="text-[10px] text-slate-500">단지 중앙 놀이터에서 부개서초 정문까지 아이와 함께 걷는 유모차 동선 실제 체험.</p></div></li>
+                                            <div className="space-y-12">
+                                                <h4 className="text-2xl font-black text-indigo-400 mb-10 border-b border-white/5 pb-6 italic uppercase tracking-widest">Outside Check</h4>
+                                                <ul className="space-y-10">
+                                                    <li className="flex gap-6 items-start">
+                                                        <Icon name="CheckSquare" className="text-indigo-500 shrink-0 mt-1" size={24}/>
+                                                        <div className="text-lg leading-relaxed"><strong className="text-white block mb-2 font-black italic">야간 주차 컨디션</strong><p className="text-sm text-slate-500 italic">평일 밤 8시 이후 방문하여 이중 주차 비중 및 지하 주차장 관리인 유무 확인.</p></div>
+                                                    </li>
+                                                    <li className="flex gap-6 items-start">
+                                                        <Icon name="CheckSquare" className="text-indigo-500 shrink-0 mt-1" size={24}/>
+                                                        <div className="text-lg leading-relaxed"><strong className="text-white block mb-2 font-black italic">아이와 유모차 동선</strong><p className="text-sm text-slate-500 italic">단지 중앙 놀이터에서 초등학교 정문까지 직접 유모차를 미는 동선을 시뮬레이션.</p></div>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </div>
                                     )}
                                     {activeActionTab === 'qna' && (
-                                        <div className="space-y-8 animate-reveal">
+                                        <div className="space-y-12 animate-reveal">
                                             {[
-                                                { q: "매도 사유가 정확히 무엇인가요?", a: "갈아타기용 급매인지, 단순 시세 확인용인지 파악하여 네고 전략을 수립하기 위함.", i: "MessageCircle" },
-                                                { q: "잔금 일정을 당기면 가격 조정이 더 되나요?", a: "현금을 쥔 매수자로서 구체적인 일정을 던져야 진짜 급매 네고가 시작됩니다.", i: "Wallet" },
-                                                { q: "관리실에 접수된 층간소음 민원 이력이 있나요?", a: "실거주 시 가장 치명적인 리스크를 미리 회피할 수 있는 유일한 데이터입니다.", i: "ShieldCheck" }
+                                                { q: "집주인의 매도 사유가 정확히 무엇인가요?", a: "단순한 갈아타기용 급매인지, 세금 문제로 인한 시간적 급박함이 있는지 파악하여 네고 우위를 점함.", i: "MessageCircle" },
+                                                { q: "잔금 일정을 2개월 내로 당기면 조정 폭은?", a: "현금을 쥔 매수자의 가장 강력한 무기는 '빠른 잔금'입니다. 구체적인 일정을 던져야 진짜 금액이 나옵니다.", i: "Wallet" },
+                                                { q: "최근에 관리실에 접수된 층간소음 민원이 있었나요?", a: "실거주 시 가장 큰 스트레스 요인을 이웃을 통해 미리 파악하는 필수 체크 항목.", i: "ShieldAlert" }
                                             ].map((item, i) => (
-                                                <div key={i} className="p-10 bg-white/5 rounded-[2.5rem] border-l-8 border-l-blue-600 flex gap-8 items-start shadow-xl">
-                                                    <div className="p-4 bg-blue-600/10 rounded-2xl text-blue-400"><Icon name={item.i} size={28} /></div>
+                                                <div key={i} className="p-12 bg-white/5 rounded-[4rem] border-l-[16px] border-l-blue-600 flex gap-12 items-start shadow-2xl group hover:bg-white/10 transition-colors">
+                                                    <div className="p-5 bg-blue-600/10 rounded-3xl text-blue-400 group-hover:scale-110 transition-transform"><Icon name={item.i} size={40} /></div>
                                                     <div>
-                                                        <p className="text-xl font-black text-white mb-3 italic">"{item.q}"</p>
-                                                        <p className="text-sm text-slate-400 leading-relaxed font-medium">{item.a}</p>
+                                                        <p className="text-3xl font-black text-white mb-4 italic leading-tight">"{item.q}"</p>
+                                                        <p className="text-lg text-slate-400 leading-relaxed italic font-light">{item.a}</p>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                     {activeActionTab === 'dong' && (
-                                        <div className="grid md:grid-cols-3 gap-8 animate-reveal">
-                                            <div className="p-10 bg-blue-600/20 border border-blue-500/40 rounded-[3rem]">
-                                                <span className="px-4 py-1.5 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block shadow-lg shadow-blue-600/20">Royal (1순위)</span>
-                                                <h4 className="text-3xl font-black mb-6 text-white italic">108, 109, 110동</h4>
-                                                <p className="text-xs text-slate-400 leading-relaxed font-medium">단지 중앙 위치로 철길 소음이 최소화되며, 정원 조경 뷰가 압권임. 향후 매도 시 가장 높은 프리미엄과 환금성을 자랑함.</p>
+                                        <div className="grid md:grid-cols-3 gap-12 animate-reveal">
+                                            <div className="p-14 bg-blue-600/20 border border-blue-500/40 rounded-[4rem] transform hover:-translate-y-4 transition-all">
+                                                <span className="px-5 py-2 bg-blue-600 rounded-full text-[11px] font-black uppercase tracking-[0.3em] mb-10 inline-block shadow-xl">Royal Class</span>
+                                                <h4 className="text-4xl font-black mb-8 text-white italic tracking-tighter">108, 109, 110동</h4>
+                                                <p className="text-sm text-slate-400 leading-relaxed font-light italic">단지 한가운데 위치하여 전철 소음이 0에 수렴하며, 아름다운 중앙 정원 뷰를 확보한 로열동. 향후 매도 시 가장 빠른 환금성과 높은 프리미엄 보장.</p>
                                             </div>
-                                            <div className="p-10 bg-slate-800 border border-white/5 rounded-[3rem]">
-                                                <span className="px-4 py-1.5 bg-slate-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">Value (2순위)</span>
-                                                <h4 className="text-3xl font-black mb-6 text-slate-300 italic">111, 112동</h4>
-                                                <p className="text-xs text-slate-500 leading-relaxed font-medium">학교 접근성이 매우 뛰어난 가성비 라인. 조용한 실거주를 중시하는 학부모 수요가 꾸준한 곳.</p>
+                                            <div className="p-14 bg-slate-800 border border-white/5 rounded-[4rem] transform hover:-translate-y-4 transition-all">
+                                                <span className="px-5 py-2 bg-slate-700 rounded-full text-[11px] font-black uppercase tracking-[0.3em] mb-10 inline-block">Value Choice</span>
+                                                <h4 className="text-4xl font-black mb-8 text-slate-300 italic tracking-tighter">111, 112동</h4>
+                                                <p className="text-sm text-slate-500 leading-relaxed font-light italic">초등학교와 가장 인접하여 통학 편의가 극대화된 가성비 라인. 실거주 만족도가 높아 학부모들 사이에서 선호도가 꾸준히 유지되는 곳.</p>
                                             </div>
-                                            <div className="p-10 bg-red-950/20 border border-red-500/10 rounded-[3rem] opacity-60 grayscale">
-                                                <span className="px-4 py-1.5 bg-red-900/40 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">Avoid (주의)</span>
-                                                <h4 className="text-3xl font-black mb-6 text-red-400 italic">철길 직면 저층</h4>
-                                                <p className="text-xs text-slate-600 leading-relaxed font-medium">소음 민감도가 높은 매수자에게 외면받을 수 있음. 저렴한 가격에 매료되기보다는 미래 환금성을 고려해야 함.</p>
+                                            <div className="p-14 bg-red-950/20 border border-red-500/10 rounded-[4rem] opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+                                                <span className="px-5 py-2 bg-red-900/40 rounded-full text-[11px] font-black uppercase tracking-[0.3em] mb-10 inline-block">Caution Line</span>
+                                                <h4 className="text-4xl font-black mb-8 text-red-400 italic tracking-tighter">철길 직면 저층부</h4>
+                                                <p className="text-sm text-slate-600 leading-relaxed font-light italic">가격은 가장 저렴하나 소음 및 분진 리스크로 인해 매수 대기자들로부터 외면받을 가능성이 큼. 단순 가격 메리트보다는 미래 가치를 고려해 지양할 것.</p>
                                             </div>
                                         </div>
                                     )}
@@ -680,40 +688,42 @@
                         </section>
 
                         {/* Final Verdict Section */}
-                        <section id="verdict" className="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-[5rem] p-12 md:p-32 text-center text-white relative overflow-hidden shadow-[0_0_100px_rgba(37,99,235,0.4)] scroll-mt-32">
-                            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                            <div className="relative z-10 max-w-4xl mx-auto">
-                                <Icon name="Award" size={100} className="mx-auto mb-12 text-cyan-300 animate-bounce" />
-                                <h2 className="text-6xl md:text-8xl font-black mb-12 tracking-tighter uppercase leading-[0.8]">Strategic Buy:<br/><span className="underline decoration-cyan-400 underline-offset-[12px]">GRADE A+</span></h2>
-                                <p className="text-2xl md:text-3xl font-light leading-relaxed mb-20 italic opacity-95">
-                                    "힐스테이트 부평은 감정으로 사는 집이 아니라, **냉철한 데이터로 입증된 필승의 패**입니다. GTX-B의 미래 가치와 0m 초품아의 현재 가치를 동시에 확보하는 이 결정은, 5년 뒤 우리 가족을 마포·영등포로 이끌어 줄 가장 강력한 징검다리가 될 것입니다."
+                        <section id="verdict" className="bg-gradient-to-br from-blue-700 via-indigo-900 to-slate-950 rounded-[6rem] p-12 md:p-40 text-center text-white relative overflow-hidden shadow-[0_0_150px_rgba(37,99,235,0.4)] scroll-mt-32">
+                            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                            <div className="relative z-10 max-w-5xl mx-auto">
+                                <Icon name="Award" size={120} className="mx-auto mb-16 text-cyan-300 animate-bounce" />
+                                <h2 className="text-7xl md:text-[9rem] font-black mb-16 tracking-tighter uppercase leading-[0.8]">Strategic Buy:<br/><span className="text-bloom italic underline decoration-cyan-400 underline-offset-[16px]">Grade A+</span></h2>
+                                <p className="text-3xl md:text-4xl font-light leading-relaxed mb-24 italic opacity-95">
+                                    "힐스테이트 부평은 단순한 아파트가 아니라, <br/>우리 가족의 자산을 지키고 키워줄 <strong className="text-white">가장 안전한 엔진</strong>입니다. <br/>GTX의 미래 가치와 0m 초품아의 안심 육아를 거머쥐는 이 결정은, <br/>5년 뒤 우리 가족을 마포·영등포의 중심으로 이끌어 줄 것입니다."
                                 </p>
-                                <div className="flex flex-wrap justify-center gap-16 text-[10px] font-black uppercase tracking-[0.5em] opacity-70">
-                                    <div className="flex flex-col items-center gap-2"><span>Investment Value</span><span className="text-4xl text-white font-black">92%</span></div>
-                                    <div className="flex flex-col items-center gap-2"><span>Family Safety</span><span className="text-4xl text-white font-black">100%</span></div>
-                                    <div className="flex flex-col items-center gap-2"><span>Exit Probability</span><span className="text-4xl text-white font-black">MAX</span></div>
+                                <div className="flex flex-wrap justify-center gap-24 text-[12px] font-black uppercase tracking-[0.6em] opacity-80">
+                                    <div className="flex flex-col items-center gap-6"><span>Investment Potential</span><span className="text-6xl text-white font-black italic">95%</span></div>
+                                    <div className="flex flex-col items-center gap-6"><span>Family Happiness</span><span className="text-6xl text-white font-black italic">100%</span></div>
+                                    <div className="flex flex-col items-center gap-6"><span>Exit Confidence</span><span className="text-6xl text-white font-black italic">MAX</span></div>
                                 </div>
                             </div>
                         </section>
 
                     </main>
 
-                    {/* Footer */}
-                    <footer className="bg-black py-32 px-6 border-t border-white/5 text-center">
-                        <div className="max-w-7xl mx-auto flex flex-col items-center gap-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center"><Icon name="ShieldCheck" size={16} /></div>
-                                <span className="text-sm font-black uppercase tracking-[0.5em] text-slate-400 italic">Project D.H | Investment Analysis 2025</span>
+                    {/* Footer Section */}
+                    <footer className="bg-black py-40 px-8 border-t border-white/5 text-center">
+                        <div className="max-w-7xl mx-auto flex flex-col items-center gap-14">
+                            <div className="flex items-center gap-6 group">
+                                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center group-hover:rotate-180 transition-transform duration-700"><Icon name="ShieldCheck" size={24} className="text-white" /></div>
+                                <span className="text-lg font-black uppercase tracking-[0.6em] text-slate-400 italic">Project D.H | Investment Analysis 2025</span>
                             </div>
-                            <p className="text-[10px] text-slate-700 max-w-2xl leading-relaxed uppercase tracking-[0.3em] font-medium opacity-50">
-                                본 보고서는 힐스테이트 부평 59A 타입 매수 타당성 분석을 위해 2025년 12월 30일 데이터 기준으로 제작되었습니다. <br/>
-                                모든 수치는 시장 환경에 따라 변동될 수 있으며, 투자에 대한 최종 결정과 책임은 본인에게 있습니다.
+                            <p className="text-[11px] text-slate-700 max-w-3xl leading-relaxed uppercase tracking-[0.4em] font-medium opacity-60">
+                                본 분석 보고서는 힐스테이트 부평 59A 타입의 매수 타당성 검토를 위해 2025년 12월 실거래 데이터 및 거시 경제 지표를 기반으로 작성되었습니다. <br/><br/>
+                                시장 환경에 따라 가치 평가 기준은 변동될 수 있으며, 투자에 대한 모든 최종 결정과 책임은 투자자 본인에게 있습니다. <br/>
+                                © 2025 H.J. JUNG STRATEGY LAB. ALL RIGHTS RESERVED.
                             </p>
-                            <div className="flex gap-8 mt-4 grayscale opacity-20">
-                                <Icon name="TrendingUp" size={20} />
-                                <Icon name="Landmark" size={20} />
-                                <Icon name="ShieldCheck" size={20} />
-                                <Icon name="Award" size={20} />
+                            <div className="flex gap-14 mt-6 grayscale opacity-20 hover:opacity-100 transition-opacity">
+                                <Icon name="TrendingUp" size={28} />
+                                <Icon name="Landmark" size={28} />
+                                <Icon name="ShieldCheck" size={28} />
+                                <Icon name="Award" size={28} />
+                                <Icon name="Zap" size={28} />
                             </div>
                         </div>
                     </footer>
@@ -722,7 +732,9 @@
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
+        // Render with Error Boundary & Stability
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
         root.render(<App />);
     </script>
 </body>
